@@ -193,7 +193,8 @@
 .dm-start-flow article > span { margin-bottom:8px; }
 .dm-start-flow h3 { font-size:14px; }
 .dm-start-flow p { color:#6b6b73; font-size:12px; }
-.dm-drop small,.dm-start-footnote,.dm-demo-footnote { color:#73737a; font-size:11px; }
+.dm-drop small { color:#73737a; font-size:11px; }
+.dm-start-footnote,.dm-demo-footnote { color:#57575f; font-size:13px; }
 .dm-stat span,.dm-stat small,.dm-feature p,.dm-overview-hero p,.dm-section-heading p,
 .dm-optimization-setup p,.dm-change p,.dm-publish-callout p,.dm-answer p { color:#696971; }
 .dm-feature p,.dm-overview-hero p,.dm-optimization-setup p,.dm-change p { font-size:13px; }

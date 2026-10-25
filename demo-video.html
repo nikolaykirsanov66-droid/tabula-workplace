@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffdf00">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Табула · Демонстрация с рассказом</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./demo-video.css?v=20261025-1">
+</head>
+<body class="dv-page">
+  <header class="dv-bar">
+    <a class="dv-brand" href="./index.html" aria-label="Табула — рабочее место"><span class="dv-brand-mark" aria-hidden="true">Т</span><strong>Табула</strong></a>
+    <span class="dv-section">Демонстрация</span>
+    <a class="dv-workspace" href="./index.html">Открыть рабочее место <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="dv-main">
+    <div class="dv-intro">
+      <p class="dv-eyebrow">Видео с объяснением</p>
+      <h1>Как работать с моделью в Табуле</h1>
+      <p class="dv-description">Модель, граф зависимостей, аналитика и новый план — на примере клининговой компании.</p>
+    </div>
+
+    <section class="dv-player-card" aria-label="Видеодемонстрация Табулы">
+      <video id="dv-video" class="dv-video" controls playsinline preload="metadata" poster="./demo-video-poster.jpg" aria-label="Демонстрация рабочего места Табулы с русской озвучкой">
+        <source src="https://github.com/nikolaykirsanov66-droid/tabula-workplace/releases/download/demo-2026-10-25/Tabula-demo-2026-10-25.mp4" type="video/mp4">
+        <track kind="subtitles" src="./demo-video.vtt" srclang="ru" label="Русские субтитры">
+        Ваш браузер не поддерживает видео. <a href="https://github.com/nikolaykirsanov66-droid/tabula-workplace/releases/download/demo-2026-10-25/Tabula-demo-2026-10-25.mp4">Открыть видеозапись</a>.
+      </video>
+      <div class="dv-player-caption"><span class="dv-audio-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4V9Z"/><path d="M17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14"/></svg></span><span>Запись настоящего рабочего места · С русской озвучкой</span></div>
+    </section>
+    <p id="dv-video-error" class="dv-error" role="status" hidden>Не удалось загрузить видео. <a href="https://github.com/nikolaykirsanov66-droid/tabula-workplace/releases/download/demo-2026-10-25/Tabula-demo-2026-10-25.mp4">Открыть запись отдельно</a> или попробуйте ещё раз позже.</p>
+
+    <section class="dv-chapters" aria-labelledby="dv-chapters-title">
+      <div class="dv-chapters-heading"><h2 id="dv-chapters-title">Что в ролике</h2><span>Перейти к нужному моменту</span></div>
+      <nav class="dv-chapter-grid" aria-label="Главы видеодемонстрации">
+        <button id="intro" class="dv-chapter" type="button" data-time="0"><span class="dv-chapter-number">01</span><span class="dv-chapter-label">Знакомство</span><span class="dv-chapter-time">0:00</span></button>
+        <button id="excel" class="dv-chapter" type="button" data-time="10.633"><span class="dv-chapter-number">02</span><span class="dv-chapter-label">Модель из Excel</span><span class="dv-chapter-time">0:10</span></button>
+        <button id="graph" class="dv-chapter" type="button" data-time="27.5"><span class="dv-chapter-number">03</span><span class="dv-chapter-label">Граф зависимостей</span><span class="dv-chapter-time">0:27</span></button>
+        <button id="analysis" class="dv-chapter" type="button" data-time="50.4"><span class="dv-chapter-number">04</span><span class="dv-chapter-label">Вопросы к модели</span><span class="dv-chapter-time">0:50</span></button>
+        <button id="optimization" class="dv-chapter" type="button" data-time="68.667"><span class="dv-chapter-number">05</span><span class="dv-chapter-label">Расчёт нового плана</span><span class="dv-chapter-time">1:08</span></button>
+        <button id="actions" class="dv-chapter" type="button" data-time="95.167"><span class="dv-chapter-number">06</span><span class="dv-chapter-label">Что изменилось</span><span class="dv-chapter-time">1:35</span></button>
+        <button id="publish" class="dv-chapter" type="button" data-time="120.6"><span class="dv-chapter-number">07</span><span class="dv-chapter-label">Запись новой модели</span><span class="dv-chapter-time">2:00</span></button>
+        <button id="dashboard" class="dv-chapter" type="button" data-time="138.267"><span class="dv-chapter-number">08</span><span class="dv-chapter-label">Пульт управления</span><span class="dv-chapter-time">2:18</span></button>
+        <button id="outro" class="dv-chapter" type="button" data-time="158.7"><span class="dv-chapter-number">09</span><span class="dv-chapter-label">Итог</span><span class="dv-chapter-time">2:38</span></button>
+      </nav>
+    </section>
+
+    <footer class="dv-footer">
+      <p>Контрольный пример: границы объёмов, мощность и удельные затраты заданы для демонстрации. Результат относится к маржинальному доходу продаж; постоянные расходы не включены.</p>
+      <a href="./demo.html">Открыть интерактивный демопример <span aria-hidden="true">→</span></a>
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      const video = document.getElementById("dv-video");
+      const chapters = Array.from(document.querySelectorAll(".dv-chapter"));
+      const format = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+      chapters.forEach(button => {
+        const time = Number(button.dataset.time);
+        button.querySelector(".dv-chapter-time").textContent = format(time);
+        button.addEventListener("click", () => {
+          if (!Number.isFinite(time) || time < 0) return;
+          try {
+            video.currentTime = time;
+            const playing = video.play();
+            if (playing) playing.catch(() => {});
+          } catch (_) {
+            document.getElementById("dv-video-error").hidden = false;
+          }
+        });
+      });
+      video.addEventListener("timeupdate", () => {
+        const current = [...chapters].reverse().find(button => Number(button.dataset.time) <= video.currentTime);
+        chapters.forEach(button => {
+          if (button === current) button.setAttribute("aria-current", "true");
+          else button.removeAttribute("aria-current");
+        });
+      });
+      const unavailable = () => { document.getElementById("dv-video-error").hidden = false; };
+      video.addEventListener("error", unavailable);
+      video.querySelector("source").addEventListener("error", unavailable);
+    })();
+  </script>
+</body>
+</html>

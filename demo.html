@@ -9,36 +9,36 @@
   <title>Табула · Модель, данные и решения</title>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./dashboard.css">
-  <link rel="stylesheet" href="./demo.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./demo.css?v=20261025-demo-copy-1">
   <script src="./publicconfig.js?v=6f51ad541b4f" defer></script>
   <script src="./connection.js" defer></script>
   <script src="./presentation.js" defer></script>
   <script src="./dashboard.js" defer></script>
-  <script src="./demo.js?v=20261025-workspace-clean-3" defer></script>
+  <script src="./demo.js?v=20261025-demo-copy-1" defer></script>
 </head>
 <body class="dm-body">
   <header class="dm-application-bar">
     <a class="dm-brand" href="./demo.html" aria-label="Табула: новая демонстрация"><span class="dm-brand-symbol" aria-hidden="true">Т</span><strong>Табула</strong></a>
-    <span class="dm-application-caption">Модель, данные и решения</span>
-    <div class="dm-application-right"><span class="dm-local-label">Рабочее место</span><button id="dm-about" class="dm-demo-badge" type="button">Деморежим</button></div>
+    <span class="dm-application-caption">Аналитика и планирование</span>
+    <div class="dm-application-right"><a class="application-demo-link" href="./demo-video.html">Видео с рассказом</a><span class="dm-local-label">Рабочее место</span><button id="dm-about" class="dm-demo-badge" type="button">Деморежим</button></div>
   </header>
   <div class="dm-shell">
     <aside class="dm-sidebar" aria-label="Модели и навигация">
       <div class="dm-sidebar-heading"><span>Мои модели</span><button id="dm-new" class="dm-icon-button" type="button" aria-label="Новая демонстрация" title="Новая демонстрация">+</button></div>
-      <div id="dm-model-list" class="dm-model-list"><p class="dm-sidebar-empty">Загрузите Excel — здесь появится ваша модель.</p></div>
+      <div id="dm-model-list" class="dm-model-list"><p class="dm-sidebar-empty">Загрузите контрольный Excel, чтобы открыть пример.</p></div>
       <div class="dm-sidebar-divider"></div>
       <p class="dm-sidebar-caption">Работа с моделью</p>
       <nav id="dm-navigation" class="dm-navigation" aria-label="Разделы модели">
         <button type="button" data-view="overview" disabled><span class="dm-nav-mark" aria-hidden="true">◫</span>Обзор</button>
-        <button type="button" data-view="graph" disabled><span class="dm-nav-mark" aria-hidden="true">◎</span>3D-граф связей</button>
         <button type="button" data-view="analytics" disabled><span class="dm-nav-mark" aria-hidden="true">⌁</span>Аналитика</button>
+        <button type="button" data-view="graph" disabled><span class="dm-nav-mark" aria-hidden="true">◎</span>3D-граф</button>
         <button type="button" data-view="optimization" disabled><span class="dm-nav-mark" aria-hidden="true">◇</span>Оптимизация</button>
         <button type="button" data-view="dashboard" disabled><span class="dm-nav-mark" aria-hidden="true">▥</span>Пульт управления</button>
       </nav>
-      <div class="dm-sidebar-bottom"><span class="dm-connection-dot" aria-hidden="true"></span><span id="dm-connection-label">Локальная версия</span><button id="dm-access" type="button" aria-label="Настроить подключение">Подключение</button></div>
+      <div class="dm-sidebar-bottom"><span class="dm-connection-dot" aria-hidden="true"></span><span id="dm-connection-label">Нет подключения</span><button id="dm-access" type="button" aria-label="Настроить подключение">Подключение</button></div>
     </aside>
     <main class="dm-main">
-      <header class="dm-workspace-header"><div><p class="dm-breadcrumb" id="dm-breadcrumb">Рабочее пространство</p><h1 id="dm-title">Начните с вашей модели</h1><p id="dm-caption">Excel → Табула → граф → решения</p></div><span id="dm-model-status" class="dm-model-status" hidden></span></header>
+      <header class="dm-workspace-header"><div><p class="dm-breadcrumb" id="dm-breadcrumb">Рабочее пространство</p><h1 id="dm-title">Демонстрация на примере</h1><p id="dm-caption">Контрольный Excel · граф и показатели Табулы</p></div><span id="dm-model-status" class="dm-model-status" hidden></span></header>
       <div id="dm-notice" class="dm-notice" role="status" aria-live="polite" hidden></div>
       <section id="dm-content" class="dm-content" aria-label="Рабочая область"></section>
     </main>

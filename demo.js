@@ -9,8 +9,8 @@
   const modelTitle = value => window.TabulaPresentation?.title?.(value) ?? clean(value);
   const state = {token: window.TabulaConnection.getToken(), manifest: null, session: null, view: "start", connected: false,
     busy: false, stage: -1, uploadedName: "", answers: [], asking: false, optimizing: false, publishing: false, generation: 0, graphHtml: "", graphChat: ""};
-  const views = {overview: ["Обзор модели", "Модель готова к исследованию и работе с планом"], graph: ["3D-граф связей", "Исследуйте модель: вращайте, приближайте, открывайте показатели"],
-    analytics: ["Аналитика", "Понятные ответы по показателям и расчётным связям"], optimization: ["Оптимизация плана", "От расчёта — к конкретным изменениям и действиям"], dashboard: ["Пульт управления", "Ключевые показатели, динамика и точные значения"]};
+  const views = {overview: ["Обзор модели", "Клининговая компания · план 2025"], graph: ["3D-граф", "Показатели и расчётные связи"],
+    analytics: ["Аналитика", "Подготовленные вопросы по показателям модели"], optimization: ["Оптимизация плана", "Расчёт и сравнение плана продаж"], dashboard: ["Пульт управления", "Показатели и динамика исходного плана"]};
   const content = $("dm-content"), fileInput = $("dm-file"), dashboardRoot = document.createElement("section");
   let dashboard = null, returningFocus = null, graphExpanded = false, dashboardNavigationObserver = null;
 
@@ -63,18 +63,18 @@
     const ready = !!state.session && state.stage >= 4;
     const view = views[state.view];
     $("dm-breadcrumb").textContent = ready ? "Модель / " + (view?.[0] || "Обзор") : "Рабочее пространство";
-    $("dm-title").textContent = ready ? modelLabel() : state.stage >= 0 ? "Подготавливаем модель" : "Начните с вашей модели";
-    $("dm-caption").textContent = ready ? view?.[1] || views.overview[1] : "Excel → Табула → граф → решения";
+    $("dm-title").textContent = ready ? modelLabel() : state.stage >= 0 ? "Подготавливаем модель" : "Демонстрация на примере";
+    $("dm-caption").textContent = ready ? view?.[1] || views.overview[1] : "Контрольный Excel · граф и показатели Табулы";
     $("dm-model-status").hidden = !ready;
-    $("dm-model-status").textContent = published() ? "Демокопия плана подготовлена" : "Снимок модели готов";
+    $("dm-model-status").textContent = published() ? "Результат сохранён в демосессии" : "Снимок модели готов";
     $("dm-new").disabled = state.busy || state.asking || state.optimizing || state.publishing;
-    $("dm-connection-label").textContent = state.connected ? "Harness доступен" : "Локальный Harness";
+    $("dm-connection-label").textContent = state.connected ? "Подключено" : "Нет подключения";
     const list = $("dm-model-list"); list.replaceChildren();
     if (ready) {
       const item = button("", () => show("overview"), "dm-model-button"), copy = node("span");
-      copy.append(node("strong", "", modelLabel()), node("small", "", published() ? "Новая копия · демо" : "Модель · демо"));
+      copy.append(node("strong", "", modelLabel()), node("small", "", published() ? "Результат · демо" : "Модель · демо"));
       item.append(node("span", "dm-model-icon", "▦"), copy); list.append(item);
-    } else list.append(node("p", "dm-sidebar-empty", state.stage >= 0 ? "Подготовка вашей модели…" : "Загрузите Excel — здесь появится ваша модель."));
+    } else list.append(node("p", "dm-sidebar-empty", state.stage >= 0 ? "Подготовка демопримера…" : "Загрузите контрольный Excel, чтобы открыть пример."));
     document.querySelectorAll("[data-view]").forEach(item => {
       item.disabled = !ready; item.classList.toggle("selected", ready && item.dataset.view === state.view);
       item.setAttribute("aria-current", ready && item.dataset.view === state.view ? "page" : "false");
@@ -101,29 +101,29 @@
   }
   function renderStart() {
     const root = node("div", "dm-start"), intro = node("div", "dm-start-intro");
-    intro.append(node("p", "dm-eyebrow", "От таблицы к управлению бизнесом"), node("h2", "", "Ваша модель. Все связи. Новые решения."),
-      node("p", "", "Загрузите финансовую модель, исследуйте связи показателей и найдите возможности для улучшения плана."));
+    intro.append(node("p", "dm-eyebrow", "Демонстрация на модели клининговой компании"), node("h2", "", "План продаж: показатели, связи и расчёт"),
+      node("p", "", "Загрузите контрольный Excel, чтобы открыть подготовленный пример с графом, аналитикой и расчётом плана."));
     const drop = button("", () => { if (!state.connected) openAccess(); else fileInput.click(); }, "dm-drop");
-    drop.append(node("span", "dm-drop-symbol", "+"), node("strong", "", "Загрузить Excel"), node("small", "", "Перетащите файл сюда или нажмите, чтобы выбрать"));
+    drop.append(node("span", "dm-drop-symbol", "+"), node("strong", "", "Загрузить Excel"), node("small", "", "Выберите контрольный файл клининговой компании"));
     for (const name of ["dragenter", "dragover"]) drop.addEventListener(name, event => { event.preventDefault(); drop.classList.add("dragging"); });
     for (const name of ["dragleave", "drop"]) drop.addEventListener(name, event => { event.preventDefault(); drop.classList.remove("dragging"); });
     drop.addEventListener("drop", event => { const file = event.dataTransfer?.files?.[0]; if (file) upload(file); });
     const flow = node("div", "dm-start-flow");
-    for (const [index, title, description] of [["01", "Единая модель", "Формулы, показатели и данные в одном пространстве."], ["02", "Граф связей", "Понятно, как устроены расчёты и что на что влияет."], ["03", "Аналитика и план", "Объяснения по модели и расчёт улучшенного плана."], ["04", "Пульт управления", "Ключевые показатели, динамика и детализация."]]) {
+    for (const [index, title, description] of [["01", "Модель", "Показатели и формулы сохранённого примера."], ["02", "Граф связей", "Показатели и связи между расчётами."], ["03", "Аналитика и план", "Подготовленные ответы и расчёт по заданным условиям."], ["04", "Пульт управления", "Показатели и динамика исходного плана."]]) {
       const card = node("article"); card.append(node("span", "", index), node("h3", "", title), node("p", "", description)); flow.append(card);
     }
-    root.append(intro, drop, node("p", "dm-start-footnote", "Демонстрационный контур: Excel сохраняется в Harness; этап переноса и создание копии плана показаны в деморежиме. Граф, аналитика и пульт используют подготовленный снимок Табулы."), flow); content.append(root);
+    root.append(intro, drop, node("p", "dm-start-footnote", "Файл сохраняется в Harness. Загрузка в Табулу и создание копии показаны без записи; граф и пульт используют подготовленный снимок Табулы."), flow); content.append(root);
   }
   function renderPreparation() {
     const root = node("div", "dm-preparation"); root.append(node("p", "dm-eyebrow", "Демонстрация загрузки в Табулу"), node("h2", "", "Из Excel — в связанную модель"), node("p", "", state.uploadedName || "Контрольная финансовая модель"));
     const list = node("ol", "dm-progress-steps");
-    const steps = [["Excel принят", "Файл сохранён в Harness"], ["Модель подготовлена", "Демонстрация переноса формул и структуры"], ["Модель в Табуле", "Демонстрационный этап загрузки"], ["Граф зависимостей", "Доступен реальный сохранённый снимок модели"]];
+    const steps = [["Excel принят", "Контрольный файл сохранён в Harness"], ["Модель подготовлена", "Показаны структура и формулы примера"], ["Модель в Табуле", "Демонстрация этапа без записи в Табулу"], ["Граф зависимостей", "Открывается сохранённый граф Табулы"]];
     steps.forEach(([label, description], index) => {
       const done = index < state.stage, active = index === state.stage, item = node("li", "dm-progress-step " + (done ? "done" : active ? "active" : "waiting"));
       if (active) item.setAttribute("aria-current", "step");
       const copy = node("div"); copy.append(node("strong", "", label), node("small", "", description)); item.append(node("span", "dm-progress-number", done ? "✓" : index + 1), copy); list.append(item);
     });
-    root.append(list, node("p", "dm-demo-footnote", "Импорт показан демонстрационным сценарием. Для исследования используется подготовленная модель Табулы.")); content.append(root);
+    root.append(list, node("p", "dm-demo-footnote", "Запись в Табулу в этом показе не выполняется. Открывается заранее подготовленный снимок модели.")); content.append(root);
   }
   async function upload(file) {
     if (state.busy) return;
@@ -151,16 +151,16 @@
   function readyMessage(label) { const box = node("div", "dm-ready"); box.append(node("span", "dm-ready-mark", "✓"), node("span", "", label)); return box; }
   function stat(label, value, footnote) { const box = node("div", "dm-stat"); box.append(node("span", "", label), node("strong", "", value)); if (footnote) box.append(node("small", "", footnote)); return box; }
   function renderOverview() {
-    const root = node("div", "dm-overview"); root.append(readyMessage(published() ? "Демонстрационная копия нового плана подготовлена. Можно перейти к показателям." : "Модель готова: граф, аналитика и показатели доступны в одном рабочем месте."));
-    const hero = node("div", "dm-overview-hero"), intro = node("div"); intro.append(node("p", "dm-eyebrow", "Единая модель управления"), node("h2", "", "Посмотрите, как устроен ваш результат"), node("p", "", "От общих показателей — к деталям расчёта. От вопроса — к объяснению. От оптимизации — к конкретным действиям."));
-    hero.append(intro, button("Исследовать 3D-граф →", () => show("graph"), "dm-button dm-primary")); root.append(hero);
+    const root = node("div", "dm-overview"); root.append(readyMessage(published() ? "Результат сохранён в демосессии. Пульт показывает исходный снимок Табулы." : "Открыт подготовленный снимок модели Табулы."));
+    const hero = node("div", "dm-overview-hero"), intro = node("div"); intro.append(node("p", "dm-eyebrow", "Модель и план компании"), node("h2", "", "Показатели и расчётный план"), node("p", "", "Посмотрите показатели, их связи и сравнение плана продаж."));
+    hero.append(intro, button("Открыть 3D-граф →", () => show("graph"), "dm-button dm-primary")); root.append(hero);
     const stats = node("div", "dm-overview-stats"), model = state.manifest.model || {};
-    stats.append(stat("Узлы графа", num(model.graph_nodes), "По сохранённому графу Табулы"), stat("Расчётные связи", num(model.graph_edges), "От входов к финансовому результату"), stat("Рабочее пространство", "5 режимов", "Граф · аналитика · план · показатели")); root.append(stats);
+    stats.append(stat("Узлы графа", num(model.graph_nodes), "По сохранённому графу Табулы"), stat("Расчётные связи", num(model.graph_edges), "От входов к финансовому результату"), stat("Рабочее пространство", "5 разделов", "Граф · аналитика · план · показатели")); root.append(stats);
     const links = node("div", "dm-overview-links");
-    for (const [view, icon, label, description, link] of [["analytics", "⌁", "Разобраться в показателях", "Задайте вопрос и получите объяснение с графиком по данным модели.", "Открыть аналитику →"], ["optimization", "◇", "Улучшить план", "Запустите расчёт и посмотрите, какие решения меняют результат.", "Перейти к оптимизации →"], ["dashboard", "▥", "Видеть картину целиком", "Показатели, динамика и точные значения в едином пульте.", "Открыть пульт →"]]) {
+    for (const [view, icon, label, description, link] of [["analytics", "⌁", "Разобраться в показателях", "Выберите подготовленный вопрос о прибыли, поступлениях или связях показателей.", "Открыть аналитику →"], ["optimization", "◇", "Улучшить план", "Запустите расчёт и посмотрите, какие решения меняют результат.", "Перейти к оптимизации →"], ["dashboard", "▥", "Показатели и динамика", "Показатели, динамика и точные значения в едином пульте.", "Открыть пульт →"]]) {
       const card = button("", () => show(view), "dm-feature"); card.append(node("span", "dm-feature-icon", icon), node("strong", "", label), node("p", "", description), node("small", "", link)); links.append(card);
     }
-    root.append(links, node("p", "dm-demo-footnote", "Перенос Excel и публикация новой копии показаны в деморежиме. Исходные планы Табулы не изменяются.")); content.append(root);
+    root.append(links, node("p", "dm-demo-footnote", "Перенос Excel и создание копии показаны без записи в Табулу.")); content.append(root);
   }
   async function renderGraph() {
     const shell = node("div", "dm-graph-shell"), toolbar = node("div", "dm-graph-toolbar");
@@ -226,9 +226,9 @@
     valid.forEach(item => { const label = node("span"), mark = node("i"); mark.style.background = item.color; label.append(mark, document.createTextNode(clean(item.label))); legend.append(label); }); wrap.append(legend); return wrap;
   }
   function renderAnalytics() {
-    const root = node("div", "dm-analytics"), heading = node("div", "dm-section-heading"), intro = node("div"); intro.append(node("h2", "", "Спросите вашу модель"), node("p", "", "Показатели, динамика и связи — с опорой на сохранённые данные.")); heading.append(intro, node("span", "dm-source-pill", "По графу модели")); root.append(heading);
-    const form = node("form", "dm-question-box"), input = node("textarea"); input.rows = 2; input.maxLength = 4000; input.placeholder = "Например: как меняется прибыль и из чего она складывается?"; input.setAttribute("aria-label", "Вопрос по модели"); input.disabled = state.asking;
-    const footer = node("div", "dm-question-footer"), send = button(state.asking ? "Готовим ответ…" : "Спросить →", null, "dm-button dm-primary"); send.type = "submit"; send.disabled = state.asking; footer.append(node("small", "", "Вопрос относится к выбранной модели"), send); form.append(input, footer);
+    const root = node("div", "dm-analytics"), heading = node("div", "dm-section-heading"), intro = node("div"); intro.append(node("h2", "", "Вопросы по модели"), node("p", "", "В демопримере подготовлены ответы о прибыли, поступлениях и связях показателей.")); heading.append(intro, node("span", "dm-source-pill", "По графу модели")); root.append(heading);
+    const form = node("form", "dm-question-box"), input = node("textarea"); input.rows = 2; input.maxLength = 4000; input.placeholder = "Например: что влияет на прибыль после налогов?"; input.setAttribute("aria-label", "Вопрос по модели"); input.disabled = state.asking;
+    const footer = node("div", "dm-question-footer"), send = button(state.asking ? "Готовим ответ…" : "Спросить →", null, "dm-button dm-primary"); send.type = "submit"; send.disabled = state.asking; footer.append(node("small", "", "Демопример: клининговая компания"), send); form.append(input, footer);
     form.addEventListener("submit", event => { event.preventDefault(); if (input.value.trim()) ask(input.value.trim()); });
     input.addEventListener("keydown", event => { if ((event.ctrlKey || event.metaKey) && event.key === "Enter") { event.preventDefault(); form.requestSubmit(); } }); root.append(form);
     const samples = node("div", "dm-question-samples");
@@ -238,14 +238,14 @@
     root.append(samples);
     if (state.asking) { const pending = node("div", "dm-loading-inline"); pending.setAttribute("role", "status"); pending.append(node("span", "dm-spinner"), node("span", "", "Готовим ответ по показателям модели…")); root.append(pending); }
     if (!state.answers.length && !state.asking) {
-      const blank = node("div", "dm-panel"); blank.append(node("h3", "", "От вопроса — к пониманию"), node("p", "dm-muted", "Выберите один из вопросов выше или задайте свой. Ответ появится вместе с графиком, когда для него есть сопоставимые числовые данные.")); root.append(blank);
+      const blank = node("div", "dm-panel"); blank.append(node("h3", "", "Подготовленные вопросы"), node("p", "dm-muted", "Выберите вопрос выше или задайте вопрос о прибыли, поступлениях или связях показателей.")); root.append(blank);
     }
     for (const entry of [...state.answers].reverse()) {
       const solverAnswer = entry.answer_mode === "local_demo_solver";
       const answer = node("article", "dm-answer"); answer.append(node("span", "dm-answer-label", solverAnswer ? "РАЗБОР НОВОГО ПЛАНА" : "АНАЛИЗ МОДЕЛИ"), node("h3", "dm-answer-question", entry.question));
       for (const paragraph of clean(entry.answer).split(/\n\s*\n/).filter(Boolean)) answer.append(node("p", "", paragraph));
       if (entry.chart) answer.append(miniChart(entry.chart));
-      const foot = node("div", "dm-answer-footer"); foot.append(node("span", "", solverAnswer ? "Ответ по результату локального демонстрационного расчёта" : "Ответ по сохранённому снимку модели"), button("Перейти к оптимизации →", () => show("optimization"), "dm-quiet-button")); answer.append(foot); root.append(answer);
+      const foot = node("div", "dm-answer-footer"); foot.append(node("span", "", solverAnswer ? "Ответ по результату локального демонстрационного расчёта" : "Подготовленный ответ по сохранённому снимку модели"), button("Перейти к оптимизации →", () => show("optimization"), "dm-quiet-button")); answer.append(foot); root.append(answer);
     }
     content.append(root);
   }
@@ -276,7 +276,7 @@
   function optimizationResult() { return state.manifest.optimization || {}; }
   function renderOptimization() {
     const root = node("div", "dm-optimizer"), data = optimizationResult(), heading = node("div", "dm-section-heading"), intro = node("div");
-    intro.append(node("h2", "", "Улучшенный план — понятные действия"), node("p", "", "Рассчитайте демонстрационный сценарий и посмотрите, за счёт каких решений меняется результат.")); heading.append(intro, node("span", "dm-source-pill", "Демонстрационные условия")); root.append(heading);
+    intro.append(node("h2", "", "Расчёт плана продаж"), node("p", "", "Рассчитайте демонстрационный сценарий и посмотрите, за счёт каких решений меняется результат.")); heading.append(intro, node("span", "dm-source-pill", "Демонстрационные условия")); root.append(heading);
     if (!optimized()) {
       const setup = node("section", "dm-optimization-setup"), description = node("div");
       description.append(node("p", "dm-eyebrow", "Цель расчёта"), node("h3", "", "Максимизировать маржинальный доход"), node("p", "", "Расчёт начнётся после нажатия кнопки. Допустимые изменения и ограничения заданы в демонстрационном сценарии."));
@@ -284,7 +284,7 @@
       if (state.optimizing) { const loading = node("div", "dm-loading-inline"); loading.setAttribute("role", "status"); loading.append(node("span", "dm-spinner"), node("span", "", "Выполняется расчёт демонстрационного сценария. Готовим новый план и сравнение.")); root.append(loading); }
       else { const panel = node("div", "dm-panel"); panel.append(node("h3", "", "Что получите после расчёта"), node("p", "dm-muted", "Сравнение финансового результата, конкретные изменения в плане и последовательность действий для его реализации.")); root.append(panel); }
     } else {
-      root.append(readyMessage("Расчёт демонстрационного сценария завершён. Новый план готов к сравнению."));
+      root.append(readyMessage("Расчёт по демоусловиям завершён. Сравните результаты с исходным планом."));
       const navigation = node("nav", "dm-result-navigation"); navigation.setAttribute("aria-label", "Разделы результата оптимизации");
       navigation.append(node("span", "", "Перейти к разделу:"), button("Результат", () => scrollContentTo($("dm-result-summary")), "dm-result-anchor"),
         button("Сравнение по месяцам", () => scrollContentTo($("dm-monthly-comparison")), "dm-result-anchor"),
@@ -303,8 +303,8 @@
         show("analytics"); ask("Какие изменения дал расчёт оптимизации и что нужно сделать для реализации нового плана?");
       }, "dm-quiet-button")); root.append(discussion);
       const publish = node("div", "dm-publish-callout"), copy = node("div");
-      copy.append(node("strong", "", published() ? "Демонстрационная копия нового плана подготовлена" : "Сохраните новый план отдельной копией"), node("p", "", published() ? "Результат демонстрационного расчёта сохранён в этой сессии. Исходный снимок Табулы доступен в пульте." : "Демонстрационный шаг создания новой версии. Потребуется ваше подтверждение."));
-      publish.append(copy, button(published() ? "Перейти в пульт →" : "Создать копию с новым планом", () => published() ? show("dashboard") : confirmPublish(), "dm-button dm-primary")); root.append(publish);
+      copy.append(node("strong", "", published() ? "Результат сохранён в демосессии" : "Сохранить результат в демосессии"), node("p", "", published() ? "Расчёт сохранён в этой сессии. Исходный снимок Табулы доступен в пульте." : "Результат сохранится только в демосессии. Новая модель в Табуле не создаётся."));
+      publish.append(copy, button(published() ? "Перейти в пульт →" : "Сохранить результат", () => published() ? show("dashboard") : confirmPublish(), "dm-button dm-primary")); root.append(publish);
     }
     const basisLabel = data.basis_label || state.manifest.optimization_basis;
     if (basisLabel) { const basis = node("details", "dm-optimization-basis"); basis.append(node("summary", "", "Основа демонстрационного расчёта"), node("p", "", basisLabel)); root.append(basis); }
@@ -336,19 +336,19 @@
   }
   function confirmPublish() {
     if (state.publishing || published()) return;
-    const dialog = transientDialog("Создать копию нового плана?", ["В демонстрационной сессии появится отдельная копия с результатом оптимизации.", "Это демонстрация записи новой версии: удалённая модель Табулы не изменяется."], "dm-confirm-dialog");
-    const actions = node("div", "dm-dialog-actions"), cancel = button("Отмена", () => dialog.close()), confirm = button("Создать демонстрационную копию", async () => {
+    const dialog = transientDialog("Сохранить результат расчёта?", ["Результат оптимизации сохранится в демонстрационной сессии.", "Новая модель в Табуле не создаётся; исходный план не меняется."], "dm-confirm-dialog");
+    const actions = node("div", "dm-dialog-actions"), cancel = button("Отмена", () => dialog.close()), confirm = button("Сохранить результат", async () => {
       confirm.disabled = cancel.disabled = true; state.publishing = true; header();
       try {
         const response = await request(sessionPath() + "/publish", {method: "POST", json: {confirmed: true}}); applyManifest(response); dialog.close();
-        notice("Демонстрационная копия плана подготовлена. Можно перейти к показателям.");
+        notice("Результат сохранён в демосессии. Можно перейти к показателям.");
       } catch (error) { notice(error.message, true); confirm.disabled = cancel.disabled = false; }
       finally { state.publishing = false; render(); }
     }, "dm-button dm-primary"); actions.append(cancel, confirm); dialog.append(actions); confirm.focus();
   }
   function renderDashboard() {
     const wrap = node("div", "dm-dashboard-wrap");
-    const note = published() ? "Пульт показывает исходный сохранённый снимок Табулы. Результат демонстрационной оптимизации доступен в разделе «Оптимизация»." : "Показатели из реального сохранённого снимка Табулы.";
+    const note = published() ? "Пульт показывает исходный сохранённый снимок Табулы. Результат расчёта по демоусловиям доступен в разделе «Оптимизация»." : "Показатели из реального сохранённого снимка Табулы.";
     const navigation = node("nav", "dm-result-navigation dm-dashboard-navigation"); navigation.setAttribute("aria-label", "Разделы пульта управления");
     const cards = button("Карточки показателей", () => scrollContentTo(dashboardRoot.querySelector(".td-kpis")), "dm-result-anchor");
     const charts = button("Графики", () => scrollContentTo(dashboardRoot.querySelector(".td-section-heading")), "dm-result-anchor");
@@ -401,7 +401,7 @@
   $("dm-access-form").addEventListener("submit", event => { event.preventDefault(); connect(); });
   $("dm-access-close").addEventListener("click", () => $("dm-access-dialog").close());
   $("dm-access-dialog").addEventListener("close", () => { if (returningFocus?.isConnected) returningFocus.focus({preventScroll: true}); });
-  $("dm-about").addEventListener("click", () => transientDialog("О демонстрационном режиме", ["Excel сохраняется в Harness. Этап загрузки в Табулу показан демонстрационным сценарием.", "Граф, аналитика и пульт используют реальный сохранённый снимок подготовленной модели Табулы.", "Оптимизация рассчитывает сценарий по явно заданным демоусловиям. Создание новой копии плана сохраняет результат в демосессии; запись на удалённый сервер не выполняется."]));
+  $("dm-about").addEventListener("click", () => transientDialog("О демонстрационном режиме", ["Excel сохраняется в Harness. Этап загрузки в Табулу показан демонстрационным сценарием.", "Граф, аналитика и пульт используют реальный сохранённый снимок подготовленной модели Табулы.", "Оптимизация рассчитывает сценарий по заданным демоусловиям. Результат сохраняется только в демосессии, без создания новой модели в Табуле."]));
   document.querySelectorAll("[data-view]").forEach(item => item.addEventListener("click", () => show(item.dataset.view)));
   fileInput.addEventListener("change", () => { if (fileInput.files[0]) upload(fileInput.files[0]); });
   window.addEventListener("keydown", event => { if (event.key === "Escape" && graphExpanded) { graphExpanded = false; const shell = document.querySelector(".dm-graph-shell.expanded"); shell?.classList.remove("expanded"); const button = shell?.querySelector(".dm-graph-expand"); if (button) { button.textContent = "На весь экран"; button.focus(); } } });
