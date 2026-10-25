@@ -1,2 +1,5 @@
-# tabula-workplace
-Tabula workspace: analytics, 3D dependency graph, optimization and dashboards. Static frontend.
+# Tabula workspace
+
+Static frontend for analytics, dependency graphs, optimization and dashboards.
+
+The Python Harness API runs separately. This repository contains no business models, access keys, account credentials or server logs. Access to the API requires a key entered in the browser.

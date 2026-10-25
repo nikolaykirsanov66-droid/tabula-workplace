@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffdd00">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Табула · Аналитика и планирование</title>
+  <link rel="stylesheet" href="./style.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./charts.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./dashboard.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./model-flow.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./model-graph.css?v=20261025-workspace-clean-3">
+  <script src="./publicconfig.js?v=cc47c4c72f6e" defer></script>
+  <script src="./connection.js" defer></script>
+  <script src="./presentation.js?v=20261025-workspace-clean-3" defer></script>
+  <script src="./charts.js?v=20261025-workspace-clean-3" defer></script>
+  <script src="./model-graph.js?v=20261025-workspace-clean-3" defer></script>
+  <script src="./model-flow.js?v=20261025-workspace-clean-3" defer></script>
+  <script src="./dashboard.js?v=20261025-workspace-clean-3" defer></script>
+  <script src="./app.js?v=20261025-workspace-clean-3" defer></script>
+</head>
+<body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-1 1v-9.5A8.5 8.5 0 0 1 11.5 3h1a8.5 8.5 0 0 1 8.5 8.5Z"/><path d="M8 9h8M8 13h5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16M8 15l4-5 4 2 4-7"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 10 5-10 5L2 8l10-5ZM2 12l10 5 10-5M2 16l10 5 10-5"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 4v16m-6-6 6 6 6-6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></symbol>
+  </svg>
+
+  <header class="application-bar"><strong class="application-name">Табула</strong><span class="application-divider"></span><span class="application-section">Аналитика и планирование</span><span class="application-workplace">Рабочее место</span><a class="application-demo-link" href="./demo.html">Демопоказ</a></header>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Модели и диалоги">
+      <a class="brand" href="./" aria-label="Табула">
+        <span class="brand-mark"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-grid"/></svg></span>
+        <span class="brand-name">Модели<small>Данные и решения</small></span>
+      </a>
+      <section class="upload-section">
+        <p class="sidebar-label">Рабочее пространство</p>
+        <button class="upload-button tabula-source-button" id="open-tabula-models" type="button" disabled>
+          <span class="upload-symbol"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></span>
+          <span class="upload-copy"><strong>Граф из Табулы</strong><span>Выбрать существующую модель</span></span>
+        </button>
+        <label class="upload-button" id="upload-label" for="model-file" role="button" tabindex="0" aria-disabled="true">
+          <span class="upload-symbol"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-plus"/></svg></span>
+          <span class="upload-copy"><strong>Загрузить Excel</strong><span>Новая модель в Табуле</span></span>
+        </label>
+        <input id="model-file" class="visually-hidden" type="file" accept=".xlsx,.json" disabled>
+        <p id="upload-status" class="muted micro" aria-live="polite">Новая модель и отдельный диалог. JSON также поддерживается.</p>
+      </section>
+      <section class="chats-section">
+        <div class="section-heading">
+          <h2><span id="chat-list-title">Мои модели</span> <span id="chat-count" class="section-count">0</span></h2>
+          <div class="model-list-actions"><button id="toggle-chat-archive" class="archive-list-button" type="button" aria-pressed="false" disabled>Архив</button><button id="refresh-chats" class="icon-button subtle" title="Обновить список" aria-label="Обновить список моделей" disabled><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-refresh"/></svg></button></div>
+        </div>
+        <div id="chat-list" class="chat-list"><p class="muted empty-list">Здесь появятся ваши модели</p></div>
+      </section>
+      <details id="connection-panel" class="connection panel" open>
+        <summary class="connection-summary"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-settings"/></svg><span>Подключение</span><span id="connection-state" class="badge neutral">Нет связи</span><svg class="icon chevron"><use href="#i-chevron"/></svg></summary>
+        <div class="connection-body">
+          <form id="connect-form">
+            <label for="access-token">Ключ доступа</label>
+            <div class="token-line"><input id="access-token" type="password" placeholder="Введите ключ" autocomplete="off" spellcheck="false" required><button id="connect-button" type="submit" class="icon-button" title="Подключиться" aria-label="Подключиться"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></button></div>
+          </form>
+          <p class="muted micro">Ключ хранится в текущем окне браузера.</p>
+          <p id="capabilities" class="capabilities">Подключитесь, чтобы работать с моделью.</p>
+        </div>
+      </details>
+      <footer class="sidebar-footer"><span class="small-dot"></span><span id="runtime-label">Табула</span><span class="footer-version">v0.1</span></footer>
+    </aside>
+    <main class="main">
+      <header class="main-header">
+        <div class="header-copy">
+          <div class="header-breadcrumb"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg><span>Работа с моделью</span><span class="breadcrumb-divider">/</span><span id="workspace-breadcrumb-label">Аналитика</span></div>
+          <h1 id="chat-title">Аналитика и планирование</h1>
+          <p id="model-caption" class="muted">Выберите модель, чтобы начать работу.</p>
+        </div>
+        <div class="header-actions">
+          <span id="workspace-status" class="workspace-status"><span class="small-dot"></span><span id="workspace-status-label">Модель не выбрана</span></span>
+          <button id="jump-latest" class="icon-button subtle" title="К последнему ответу" aria-label="К последнему ответу" disabled><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-down"/></svg></button>
+        </div>
+      </header>
+      <nav class="workspace-modes" aria-label="Режим рабочего места">
+        <div class="workspace-mode-tabs">
+          <button type="button" data-workspace-mode="dialog" class="selected" aria-pressed="true">Аналитика</button>
+          <button type="button" id="workspace-graph" data-workspace-mode="graph" aria-pressed="false" disabled>3D-граф</button>
+          <button type="button" data-workspace-mode="optimization" aria-pressed="false" disabled>Оптимизация</button>
+          <button type="button" data-workspace-mode="dashboard" aria-pressed="false">Пульт управления</button>
+        </div>
+      </nav>
+      <section id="tabula-model-picker" class="tabula-model-picker" aria-labelledby="tabula-picker-title" hidden>
+        <div class="tabula-picker-heading"><div><h2 id="tabula-picker-title">Модели в Табуле</h2><p>Выберите модель, чтобы получить её актуальные данные и граф связей.</p></div><button id="close-tabula-models" class="text-button" type="button">Закрыть</button></div>
+        <label for="tabula-model-select">Модель в Табуле</label>
+        <div class="tabula-picker-controls"><select id="tabula-model-select" disabled><option value="">Загрузите список моделей</option></select><button id="refresh-tabula-models" class="model-flow-button" type="button" disabled>Обновить список</button><button id="pull-tabula-model" class="model-flow-button primary" type="button" disabled>Получить граф из Табулы</button></div>
+        <p id="tabula-model-status" class="tabula-model-status" role="status" aria-live="polite">Список моделей загружается по запросу.</p>
+      </section>
+      <section id="model-flow" class="model-flow" aria-label="Модель в Табуле и состояние плана" aria-live="polite" hidden></section>
+      <div id="global-notice" class="notice" role="status" hidden></div>
+      <section id="graph-workspace" class="model-graph-workspace" aria-label="Граф зависимостей модели" hidden></section>
+      <section id="dashboard-workspace" class="dashboard-workspace" aria-label="Пульт управления моделью" hidden></section>
+      <section id="conversation" class="conversation" aria-live="polite" aria-label="Сообщения диалога">
+        <div class="welcome">
+          <span class="welcome-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></span>
+          <p class="eyebrow">МОДЕЛЬ · ДАННЫЕ · РЕШЕНИЯ</p>
+          <h2>Граф вашей модели из Табулы</h2>
+          <p>Выберите модель из Табулы или загрузите Excel. После загрузки будут доступны показатели, связи и расчёт нового плана.</p>
+          <div class="welcome-options">
+            <div><span class="welcome-option-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chart"/></svg></span><h3>Анализ модели</h3><p>Показатели, формулы и графики с опорой на данные вашей модели.</p><span class="welcome-option-footer">От вопроса к объяснению<svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span></div>
+            <div><span class="welcome-option-icon green"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></span><h3>Оптимизация плана</h3><p>Расчёт солвером, сравнение результата и действия для выполнения плана.</p><span class="welcome-option-footer">От расчёта к действиям<svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></span></div>
+          </div>
+          <p class="welcome-start"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg>Выберите модель через «Граф из Табулы» в панели слева</p>
+        </div>
+      </section>
+      <section class="composer-section" aria-label="Новое сообщение">
+        <div id="plan-context" class="plan-context" hidden>
+          <span class="context-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></span>
+          <div><strong id="plan-context-title">Обсуждение оптимизированного плана</strong><p>Изменения, причины и действия для выполнения плана</p></div>
+          <button id="leave-plan-context" class="text-button" type="button">К исходной модели<svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-right"/></svg></button>
+        </div>
+        <div id="dashboard-focus-context" class="plan-context" hidden><div><strong id="dashboard-focus-label"></strong><p>Вопрос привязан к выбранному показателю и его ряду.</p></div><button id="clear-dashboard-focus" class="text-button" type="button">К модели целиком</button></div>
+        <form id="message-form" class="composer">
+          <div class="composer-controls">
+            <div id="plan-questions" class="plan-questions" hidden>
+              <button type="button" data-plan-question="За счёт каких решений выросла маржа? Покажи подтверждённые изменения.">За счёт чего эффект?</button>
+              <button type="button" data-plan-question="Какие конкретные действия нужно выполнить, чтобы реализовать этот план, и в какой последовательности?">Что нужно сделать?</button>
+              <button type="button" data-plan-question="Какие условия нужно подтвердить и какие риски проверить перед внедрением оптимизированного плана?">Что проверить до запуска?</button>
+            </div>
+            <label id="mode-label" class="mode-label" hidden>Расчёт<select id="execution-mode"><option value="agent">По запросу</option><option value="workflow">Прямой расчёт</option></select></label>
+          </div>
+          <label for="message-input" class="visually-hidden">Текст сообщения</label>
+          <textarea id="message-input" rows="2" maxlength="12000" placeholder="Задайте вопрос по модели…" disabled></textarea>
+          <div class="composer-footer"><p id="composer-hint">Подключитесь и выберите модель.</p><button id="send-button" class="primary-button" type="submit" disabled><span id="send-button-label">Отправить</span><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow-up"/></svg></button></div>
+        </form>
+        <div class="composer-meta"><p class="footnote">Выводы, показатели и действия по вашей модели.</p><span class="keyboard-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> отправить</span></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
