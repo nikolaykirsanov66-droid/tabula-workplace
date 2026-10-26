@@ -4,6 +4,7 @@
 // targets, business norms or whether a movement is good or bad.
 window.TabulaMetricInsights = (() => {
   const number = new Intl.NumberFormat("ru-RU", {maximumSignificantDigits: 15});
+  const shortPercent = new Intl.NumberFormat("ru-RU", {maximumFractionDigits: 2});
   const finite = value => typeof value === "number" && Number.isFinite(value);
   const present = value => {
     if (typeof value !== "string" && typeof value !== "number") return "";
@@ -18,6 +19,10 @@ window.TabulaMetricInsights = (() => {
   function amount(value, unit, signed = false) {
     if (!finite(value)) return "—";
     return (signed && value > 0 ? "+" : "") + number.format(value) + (unit ? " " + present(unit) : "");
+  }
+  function percentage(value) {
+    if (value !== 0 && Math.abs(value) < .005) return "≈ 0 %";
+    return (value > 0 ? "+" : "") + shortPercent.format(value) + " %";
   }
   function question(item, action) {
     const title = present(item.title) || "показатель", variant = present(action.title);
@@ -64,8 +69,14 @@ window.TabulaMetricInsights = (() => {
     }
     if (comparison.available === true && finite(comparison.delta_absolute)) {
       const diff = amount(comparison.delta_absolute, comparison.delta_unit || item.unit, true);
-      const rate = finite(comparison.delta_pct) ? " · " + amount(comparison.delta_pct, "%", true) : "";
-      facts.append(fact("Изменение", diff + rate));
+      const hasRate = finite(comparison.delta_pct), rate = hasRate ? " · " + percentage(comparison.delta_pct) : "";
+      const change = fact("Изменение", diff + rate);
+      if (hasRate) {
+        const exact = (comparison.delta_pct > 0 ? "+" : "") + String(comparison.delta_pct).replace(".", ",") + " %", value = change.querySelector(".metric-insight-fact-value");
+        value.title = "Без округления: " + exact;
+        value.setAttribute("aria-label", diff + "; процент без округления: " + exact);
+      }
+      facts.append(change);
     }
     if (facts.childElementCount) root.append(facts);
     if (comparison.available !== true) {
