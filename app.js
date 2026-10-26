@@ -205,6 +205,7 @@ function updateControls() {
   const allowed = connected && selected && flowAllowsKind && (configured || mode === "workflow") &&
     (state.kind !== "optimization" || state.capabilities?.solver_configured);
   el("send-button").disabled = !allowed || state.busy;
+  document.querySelectorAll("[data-metric-insight-question]").forEach(button => { button.disabled = !canDiscussMetric(); });
   el("send-button-label").textContent = state.busy ? "Отправляю" : state.kind === "optimization" ? "Запустить" : "Отправить";
   el("execution-mode").querySelector('[value="agent"]').disabled = !configured;
   let hint = "Сначала подключись и выбери модель.";
@@ -414,7 +415,7 @@ function badge(status) {
 function renderConversation() {
   if (!state.chat) return;
   const signature = JSON.stringify([state.chat.id, state.chat.messages, state.modelFlow, state.flowLoading, state.flowError, [...state.tasks.values()].filter(task => task.chat_id === state.chat.id)
-    .map(task => [task.id, task.status, task.updated_at, task.cancel_requested, task.detailsLoaded, task.steps, task.artifacts])]);
+    .map(task => [task.id, task.status, task.updated_at, task.cancel_requested, task.detailsLoaded, task.steps, task.artifacts, task.result?.metric_interpretations])]);
   if (state.renderSignature === signature) return;
   state.renderSignature = signature;
   const container = el("conversation");
@@ -476,6 +477,11 @@ function renderConversation() {
     if (message.role === "assistant" && message.task_id) {
       const task = state.tasks.get(message.task_id);
       if (task?.optimization_task_id) content.append(node("p", "review-result-label", "Разбор выбранного результата оптимизации"));
+      const insights = window.TabulaMetricInsights?.build(task, {
+        canQuestion: () => task?.chat_id === state.chat?.id && canDiscussMetric(),
+        onQuestion: question => askMetricQuestion(question, task?.chat_id),
+      });
+      if (insights) content.append(insights);
       const charts = task && !task.optimization_task_id && window.TabulaCharts?.build(task, {request: api});
       if (charts) content.append(charts);
     }
@@ -630,6 +636,21 @@ async function send(event) {
     await poll(); el("conversation").scrollTop = el("conversation").scrollHeight;
   } catch (error) { notice(error.message, true); }
   finally { setBusy(false); el("message-input").focus(); }
+}
+
+function canDiscussMetric() {
+  return !!state.chat && state.connected && !state.busy && state.workspaceMode === "dialog" &&
+    state.kind === "analysis" && !state.chat.optimization_context && !el("send-button").disabled;
+}
+function askMetricQuestion(question, chatId) {
+  if (chatId !== state.chat?.id || !canDiscussMetric()) return;
+  const input = el("message-input");
+  if (input.value.trim()) {
+    notice("Сначала отправьте или очистите уже набранный вопрос, чтобы разобрать выбранный вариант.");
+    input.focus(); return;
+  }
+  state.dashboardFocus = null; updateControls(); input.value = question;
+  el("message-form").requestSubmit();
 }
 
 function requestId() {
