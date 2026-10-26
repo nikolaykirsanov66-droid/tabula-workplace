@@ -27,6 +27,12 @@ window.TabulaScreens = (() => {
   function pivotLabel(value) {
     return text(value).replace(/^(\d{4}-\d{2}(?:-\d{2}(?:T[^\s]+)?)?)(?= · |$)/, period => periodLabel(period)).replace(/^(\d{4})-Q([1-4])(?= · |$)/, (_, year, quarter) => `${quarter} кв. ${year}`);
   }
+  function pivotRowLabel(row) {
+    const label = text(row.label), unit = text(row.unit), suffix = " · " + unit;
+    if (!unit || !label.endsWith(suffix)) return pivotLabel(label);
+    const before = label.slice(0, -suffix.length), escaped = unit.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return pivotLabel(new RegExp("(?:^|[\\s,;·(])" + escaped + "(?:$|[\\s,;·)])").test(before) ? before : label);
+  }
   function lastPoint(series) { if (!series) return null; for (let index = series.values.length - 1; index >= 0; index--) if (finite(series.values[index])) return {label: series.labels[index], value: series.values[index], index}; return null; }
   function subset(series, widget) {
     if (series.kind !== "time") return {...series, labels: [...series.labels], values: [...series.values]};
@@ -259,7 +265,8 @@ window.TabulaScreens = (() => {
       const target = screen(), draft = copy(initial || widget || {id: uid(), metric_id: "", series_id: "", title: "", chart_type: "pivot", width: "full", period_from: "", period_to: ""});
       const oldMetric = metricFor(draft), legacyIds = Array.isArray(draft.series_ids) ? draft.series_ids : draft.series_id ? [draft.series_id] : [];
       draft.chart_type = "pivot"; draft.period_from = draft.period_to = ""; delete draft.availability; delete draft.dimension_filters;
-      if (!draft.pivot?.measures) draft.pivot = {measures: draft.metric_id ? [{id: uid(), metric_id: draft.metric_id, series_ids: legacyIds, aggregation: "none"}] : [], rows: legacyIds.length > 1 ? ["series"] : [oldMetric?.kind === "category" ? "category" : "period"], columns: legacyIds.length > 1 ? [oldMetric?.kind === "category" ? "category" : "period"] : [], filters: {}, period_granularity: "source"};
+      if (!draft.pivot?.measures) draft.pivot = {layout_mode: "auto", measures: draft.metric_id ? [{id: uid(), metric_id: draft.metric_id, series_ids: legacyIds, aggregation: "none"}] : [], rows: legacyIds.length > 1 ? ["series"] : [oldMetric?.kind === "category" ? "category" : "period"], columns: legacyIds.length > 1 ? [oldMetric?.kind === "category" ? "category" : "period"] : [], filters: {}, period_granularity: "source"};
+      draft.pivot.layout_mode = draft.pivot.layout_mode || "manual";
       const dialog = dialogBase(widget ? "Настройка сводной таблицы" : "Создать сводную таблицу"), form = node("form", "ts-pivot-form"), layout = node("div", "ts-pivot-builder"), controls = node("div", "ts-pivot-controls"), preview = node("section", "ts-pivot-preview"); dialog.classList.add("ts-pivot-dialog");
       let axesEdited = !!widget?.pivot, busy = false, previewBody = null, feedback = null, confirmedSignature = "", previewResult = null, metricSearch = "";
       const aggregationTypes = [["none", "Значения из модели"], ["sum", "Сумма"], ["avg", "Среднее"], ["min", "Минимум"], ["max", "Максимум"], ["last", "Последнее значение"], ["count", "Количество значений"]];
@@ -274,16 +281,9 @@ window.TabulaScreens = (() => {
       function syncAnchor() { const first = draft.pivot.measures[0]; draft.metric_id = first?.metric_id || ""; draft.series_ids = first?.series_ids || []; draft.series_id = draft.series_ids[0] || ""; }
       function signature() { return JSON.stringify({title: draft.title, pivot: draft.pivot}); }
       function chooseDefaultAxes() {
-        if (axesEdited) return;
+        if (draft.pivot.layout_mode !== "auto") return;
         const selected = selectedRows(), axis = selected[0]?.series.kind === "category" ? "category" : "period", multipleRows = draft.pivot.measures.some(measure => measure.series_ids.length > 1), multipleMeasures = draft.pivot.measures.length > 1;
-        if (!multipleRows) { draft.pivot.rows = multipleMeasures ? ["metric"] : [axis]; draft.pivot.columns = multipleMeasures ? [axis] : []; return; }
-        const dimensions = [...new Set(selected.flatMap(({series}) => Object.keys(series.dimensions || {})))].filter(key => !technicalDimensions.has(key.toLowerCase()) && selected.every(({series}) => ["string", "number", "boolean"].includes(typeof series.dimensions?.[key]) && !/^[a-f0-9-]{32,36}$/i.test(String(series.dimensions[key]))) && new Set(selected.map(({series}) => JSON.stringify(series.dimensions[key]))).size > 1).slice(0, 3);
-        const rowFields = dimensions.map(key => "dim:" + key);
-        if (new Set(selected.map(({series}) => series.scenario)).size > 1) rowFields.push("scenario");
-        const duplicate = draft.pivot.measures.some(measure => { const signatures = rowsFor(measure).filter(row => measure.series_ids.includes(row.id)).map(row => JSON.stringify([...dimensions.map(key => row.dimensions?.[key]), ...(rowFields.includes("scenario") ? [row.scenario] : [])])); return new Set(signatures).size !== signatures.length; });
-        if (!rowFields.length || duplicate) rowFields.push("series");
-        const distinctRows = rowFields.length <= 3 ? rowFields : [...rowFields.filter(field => field.startsWith("dim:")).slice(0, rowFields.includes("scenario") ? 1 : 2), ...(rowFields.includes("scenario") ? ["scenario"] : []), "series"];
-        draft.pivot.rows = multipleMeasures ? ["metric", ...(distinctRows.length <= 2 ? distinctRows : [distinctRows[0], "series"])] : distinctRows;
+        draft.pivot.rows = multipleMeasures ? ["metric", ...(multipleRows ? ["series"] : [])] : [multipleRows ? "series" : "metric"];
         draft.pivot.columns = [axis];
       }
       function sourceFields() {
@@ -338,9 +338,12 @@ window.TabulaScreens = (() => {
           choices.forEach(({row, label}) => { const item = node("label", "ts-pivot-row-option"), check = node("input"); check.type = "checkbox"; check.value = row.id; check.checked = measure.series_ids.includes(row.id); check.setAttribute("aria-label", `Показатель ${index + 1}, строка: ${label}`); check.disabled = !check.checked && measure.series_ids.length >= 24; check.addEventListener("change", () => { if (check.checked && measure.series_ids.length < 24) measure.series_ids.push(row.id); else if (!check.checked) measure.series_ids = measure.series_ids.filter(value => value !== row.id); chooseDefaultAxes(); draft.pivot.filters = {}; invalidate(); redraw(); }); item.append(check, node("span", "", label)); picker.append(item); });
           if (choices.length > 1 || measure.series_ids.length !== 1 && choices.length) { details.append(picker, node("p", "ts-help", "До 24 рядов на показатель. Разные разрезы сохраняются отдельно.")); box.append(details); } else if (!choices.length) box.append(node("p", "ts-inline-error", "У этого показателя нет доступных рядов данных.")); selectedZone.append(box);
         }); measures.append(selectedZone);
-        const fields = sourceFields(), axes = section("Строки и столбцы"), axisOptions = [...fields.values()];
-        for (const [key, label] of [["rows", "Строки"], ["columns", "Столбцы"]]) { const select = multiSelect(`${label} сводной таблицы`, axisOptions, draft.pivot[key], values => { axesEdited = true; draft.pivot[key] = values; invalidate(); }, value => value.label); axes.append(field(label, select)); }
-        const axisTools = node("div", "ts-pivot-toolbar"), transpose = button("Поменять местами", "ts-link"), clear = button("Очистить оси", "ts-link"); transpose.addEventListener("click", () => { axesEdited = true; [draft.pivot.rows, draft.pivot.columns] = [draft.pivot.columns, draft.pivot.rows]; invalidate(); redraw(); }); clear.addEventListener("click", () => { axesEdited = true; draft.pivot.rows = []; draft.pivot.columns = []; invalidate(); redraw(); }); axisTools.append(transpose, clear); axes.append(axisTools, node("p", "ts-help", "Разместите показатели в строках или столбцах. Несколько разрезов можно выбрать с Ctrl или ⌘."));
+        const fields = sourceFields(), axes = section("Расположение"), axisOptions = [...fields.values()], modes = node("div", "ts-pivot-layout-modes");
+        for (const [value, label] of [["auto", "Общий вид"], ["manual", "Настроить вручную"]]) { const mode = button(label, "ts-button"); mode.setAttribute("aria-pressed", String(draft.pivot.layout_mode === value)); mode.addEventListener("click", () => { draft.pivot.layout_mode = value; axesEdited = value === "manual"; chooseDefaultAxes(); invalidate(); redraw(); }); modes.append(mode); } axes.append(modes);
+        if (draft.pivot.layout_mode === "manual") {
+          for (const [key, label] of [["rows", "Строки"], ["columns", "Столбцы"]]) { const select = multiSelect(`${label} сводной таблицы`, axisOptions, draft.pivot[key], values => { axesEdited = true; draft.pivot[key] = values; invalidate(); }, value => value.label); axes.append(field(label, select)); }
+          const axisTools = node("div", "ts-pivot-toolbar"), transpose = button("Поменять местами", "ts-link"), clear = button("Очистить оси", "ts-link"); transpose.addEventListener("click", () => { axesEdited = true; [draft.pivot.rows, draft.pivot.columns] = [draft.pivot.columns, draft.pivot.rows]; invalidate(); redraw(); }); clear.addEventListener("click", () => { axesEdited = true; draft.pivot.rows = []; draft.pivot.columns = []; invalidate(); redraw(); }); axisTools.append(transpose, clear); axes.append(axisTools, node("p", "ts-help", "Разместите показатели в строках или столбцах. Несколько разрезов можно выбрать с Ctrl или ⌘."));
+        } else axes.append(node("p", "ts-help", "Показатели и их разрезы располагаются строками, периоды — общими столбцами. Достаточно выбрать нужные показатели."));
         const time = selectedRows().some(item => item.series.kind === "time");
         if (time) { const granularity = node("select"); granularity.setAttribute("aria-label", "Группировка периодов"); [["source", "Как в модели"], ["month", "По месяцам"], ["quarter", "По кварталам"], ["year", "По годам"]].forEach(([value, label]) => granularity.append(option(value, label))); granularity.value = draft.pivot.period_granularity; granularity.addEventListener("change", () => { draft.pivot.period_granularity = granularity.value; invalidate(); }); axes.append(field("Периоды", granularity)); }
         const filters = section("Фильтры"), filterFields = [...fields.values()].filter(item => item.id === "scenario" || item.id === "period" || item.id === "category" || item.id.startsWith("dim:"));
@@ -362,7 +365,7 @@ window.TabulaScreens = (() => {
           const checked = data.screens?.find(item => item.id === target.id)?.widgets?.find(item => item.id === draft.id), result = checked?.pivot_result;
           if (!result?.available) throw Error(result?.reason || checked?.availability?.reason || "Не удалось собрать таблицу по выбранным настройкам.");
           if (checked.pivot) draft.pivot = copy(checked.pivot); if (checked.binding) draft.binding = copy(checked.binding); if (checked.series_bindings) draft.series_bindings = copy(checked.series_bindings); syncAnchor();
-          confirmedSignature = signature(); previewResult = copy(result); updatePreview("Таблица проверена. Её можно добавить на экран."); mobilePane("preview"); return copy(result);
+          confirmedSignature = signature(); previewResult = copy(result); redraw(); updatePreview("Таблица проверена. Её можно добавить на экран."); mobilePane("preview"); return copy(result);
         } catch (error) { if (modal === dialog) { previewResult = null; confirmedSignature = ""; updatePreview(errorText(error), true); } return null; }
         finally { busy = false; if (modal === dialog) { accept.disabled = !!basicProblem(); previewButton.disabled = !!basicProblem(); } }
       }
@@ -374,7 +377,7 @@ window.TabulaScreens = (() => {
         draft.title = draft.title.trim(); draft.pivot_result = result; delete draft.availability;
         if (widget) Object.assign(widget, draft); else { target.widgets.push(draft); state.active = target.id; } markChanged(); closeModal(); render();
       });
-      redraw(); dialog.showModal(); dialog.querySelector("input")?.focus();
+      chooseDefaultAxes(); redraw(); dialog.showModal(); dialog.querySelector("input")?.focus();
     }
     function renderPalette() {
       const panel = node("aside", "ts-palette"), details = node("details", "ts-palette-details"); details.open = window.innerWidth > 760;
@@ -428,7 +431,7 @@ window.TabulaScreens = (() => {
       const axisTitles = {period: "Период", category: "Категория", metric: "Показатель", series: "Разрез", scenario: "Сценарий"}, rowAxes = result.config?.rows || [], field = rowAxes[0] || "", heading = rowAxes.length === 1 ? axisTitles[field] || dimensionTitles[field.replace(/^dim:/, "")] || text(field.replace(/^dim:/, "")) : "Разрез";
       const first = node("th", "ts-pivot-row-heading", heading || "Разрез"); first.scope = "col"; head.append(first);
       result.columns.forEach(column => { const cell = node("th", "", pivotLabel(column.label)); cell.scope = "col"; if (column.unit && !text(column.label).includes(text(column.unit))) cell.append(node("span", "ts-pivot-row-meta", column.unit)); head.append(cell); }); thead.append(head);
-      result.rows.forEach(row => { const tr = node("tr"), label = node("th", "ts-pivot-row-heading"); label.append(node("span", "ts-pivot-row-name", pivotLabel(row.label))); if (row.unit && !text(row.label).includes(text(row.unit))) label.append(node("span", "ts-pivot-row-meta", row.unit)); label.scope = "row"; tr.append(label); result.columns.forEach((column, index) => { const value = row.values?.[index], cell = node("td", finite(value) ? "" : "ts-pivot-missing", finite(value) ? format.format(value) : "—"); if (finite(value)) cell.title = exact.format(value); tr.append(cell); }); tbody.append(tr); });
+      result.rows.forEach(row => { const tr = node("tr"), label = node("th", "ts-pivot-row-heading"); label.append(node("span", "ts-pivot-row-name", pivotRowLabel(row))); if (row.unit && !text(row.label).includes(text(row.unit))) label.append(node("span", "ts-pivot-row-meta", row.unit)); label.scope = "row"; tr.append(label); result.columns.forEach((column, index) => { const value = row.values?.[index], cell = node("td", finite(value) ? "" : "ts-pivot-missing", finite(value) ? format.format(value) : "—"); if (finite(value)) cell.title = exact.format(value); tr.append(cell); }); tbody.append(tr); });
       table.append(thead, tbody); wrap.append(table); stage.append(wrap); stage.append(node("p", "ts-pivot-note", `${result.rows.length} ${countWord(result.rows.length, "строка", "строки", "строк")} · ${result.columns.length} ${countWord(result.columns.length, "столбец", "столбца", "столбцов")}`));
       if (Array.isArray(result.warnings) && result.warnings.length) { const warnings = node("ul", "ts-data-warnings"); [...new Set(result.warnings.map(item => text(typeof item === "string" ? item : item?.message)).filter(Boolean))].slice(0, 5).forEach(message => warnings.append(node("li", "", message))); stage.append(warnings); }
     }
