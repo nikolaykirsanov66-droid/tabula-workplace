@@ -42,7 +42,12 @@ window.TabulaConnection = (() => {
     const headers = new Headers(fetchOptions.headers || {});
     headers.set('Authorization', 'Bearer ' + token);
     if (json !== undefined) { headers.set('Content-Type', 'application/json'); fetchOptions.body = JSON.stringify(json); }
-    return fetch(target, {...fetchOptions, headers, redirect: 'error', credentials: 'omit'});
+    return fetch(target, {...fetchOptions, headers, redirect: 'error', credentials: 'omit'}).catch(failure => {
+      if (failure && failure.name === 'TypeError') {
+        throw new Error('Не удалось связаться с сервером. Проверьте подключение Harness и повторите запрос.');
+      }
+      throw failure;
+    });
   }
   return Object.freeze({apiUrl, request, getToken, saveToken, clearToken});
 })();
