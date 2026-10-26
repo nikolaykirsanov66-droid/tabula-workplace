@@ -105,6 +105,7 @@ select:focus-visible, summary:focus-visible, .upload-button:focus-visible {
 .workspace-mode-tabs button:focus-visible { outline:2px solid #176ac6; outline-offset:2px; }
 .workspace-mode-tabs button:disabled { opacity:.5; cursor:not-allowed; }
 body.dashboard-mode #conversation,body.dashboard-mode .composer-section,body.dashboard-mode #model-flow { display:none; }
+body.constraints-mode #conversation,body.constraints-mode .composer-section,body.constraints-mode #model-flow { display:none; }
 .main.graph-is-open>#dashboard-workspace { display:none; }
 body.graph-mode #conversation,body.graph-mode .composer-section { display:none; }
 .workspace-mode-tabs { flex-wrap:wrap; }

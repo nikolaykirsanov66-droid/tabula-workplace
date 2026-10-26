@@ -6,8 +6,8 @@ const state = {token: window.TabulaConnection.getToken(), capabilities: null,
   showArchived: false, chatListRevision: 0, chatListLoading: false,
   modelFlow: null, flowLoading: false, flowError: "", selectionRevision: 0, dashboardFocus: null,
   tabulaModels: [], tabulaModelsLoading: false, tabulaCatalogRevision: 0, tabulaPullRequest: null,
-  workspaceMode: ["dialog", "graph", "optimization", "dashboard"].includes(new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) ? (new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) : "dialog"};
-let dashboard = null;
+  workspaceMode: ["dialog", "graph", "optimization", "constraints", "dashboard"].includes(new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) ? (new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) : "dialog"};
+let dashboard = null, constraints = null;
 const terminal = new Set(["completed", "needs_review", "needs_input", "failed", "blocked", "cancelled", "interrupted"]);
 const statuses = {queued: ["В очереди", "neutral"], running: ["Выполняется", "running"], completed: ["Готово", "success"],
   needs_review: ["Нужна проверка", "warning"], needs_input: ["Нужно уточнение", "warning"], failed: ["Ошибка", "danger"], blocked: ["Расчёт заблокирован", "warning"],
@@ -105,7 +105,7 @@ async function api(path, options = {}) {
       updateControls();
       el("connection-state").className = "badge danger"; el("connection-state").textContent = "Нет доступа";
     }
-    throw new Error(cleanText(message));
+    const failure = new Error(cleanText(message)); failure.status = response.status; throw failure;
   }
   return options.blob ? response.blob() : response.json();
 }
@@ -278,6 +278,7 @@ async function clearSelectedChat() {
   const url = new URL(window.location.href); url.searchParams.delete("chat");
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   dashboard?.setChat(null);
+  constraints?.setChat(null);
   el("chat-title").textContent = "Аналитика и планирование";
   el("model-caption").textContent = "Выберите модель, чтобы начать работу.";
   el("message-input").value = "";
@@ -326,7 +327,11 @@ function renderChats() {
     const copy = node("span", "chat-copy");
     copy.append(node("strong", "", modelTitle(chat.title)), node("small", "", "Модель · " + dateLabel(chat.created_at)));
     button.append(icon("chat"), copy);
-    button.addEventListener("click", () => { if (!state.busy) selectChat(chat.id); });
+    button.addEventListener("click", () => {
+      if (state.busy) return;
+      if (constraints?.hasUnsavedChanges() && !window.confirm("Есть несохранённые изменения ограничений. Перейти без сохранения?")) return;
+      selectChat(chat.id);
+    });
     const row = node("div", "model-list-row"), remove = node("button", "model-delete-button");
     remove.type = "button"; remove.dataset.deleteChat = chat.id;
     remove.title = "Удалить из моих моделей"; remove.setAttribute("aria-label", "Удалить модель «" + modelTitle(chat.title) + "»");
@@ -362,6 +367,7 @@ async function selectChat(id) {
   const selectionRevision = ++state.selectionRevision;
   state.dashboardFocus = null;
   dashboard?.setChat(null);
+  constraints?.setChat(null);
   try {
     const chat = await api(`/v1/chats/${id}`);
     if (selectionRevision !== state.selectionRevision) return;
@@ -370,6 +376,7 @@ async function selectChat(id) {
     }
     state.chat = chat;
     dashboard?.setChat(chat);
+    constraints?.setChat(chat);
     sessionStorage.setItem("tabula_harness_chat_id", state.chat.id);
     const url = new URL(window.location.href);
     url.searchParams.set("chat", state.chat.id);
@@ -632,7 +639,7 @@ function requestId() {
 }
 
 function setWorkspaceMode(mode) {
-  state.workspaceMode = ["dialog", "graph", "optimization", "dashboard"].includes(mode) ? mode : "dialog";
+  state.workspaceMode = ["dialog", "graph", "optimization", "constraints", "dashboard"].includes(mode) ? mode : "dialog";
   if (state.workspaceMode === "dialog") state.kind = "analysis";
   if (state.workspaceMode === "optimization") state.kind = "optimization";
   sessionStorage.setItem("tabula_harness_workspace_mode", state.workspaceMode);
@@ -641,16 +648,18 @@ function setWorkspaceMode(mode) {
   window.history.replaceState(null, "", `${workspaceUrl.pathname}${workspaceUrl.search}${workspaceUrl.hash}`);
   modelFlow.closeGraph();
   document.body.classList.toggle("dashboard-mode", state.workspaceMode === "dashboard");
+  document.body.classList.toggle("constraints-mode", state.workspaceMode === "constraints");
   document.body.classList.toggle("graph-mode", state.workspaceMode === "graph");
   document.body.classList.toggle("optimization-mode", state.workspaceMode === "optimization");
   document.querySelectorAll("[data-workspace-mode]").forEach(button => {
     const selected = button.dataset.workspaceMode === state.workspaceMode;
     button.classList.toggle("selected", selected); button.setAttribute("aria-pressed", String(selected));
   });
-  el("jump-latest").hidden = ["dashboard", "graph"].includes(state.workspaceMode);
-  el("workspace-breadcrumb-label").textContent = {dialog: "Аналитика", graph: "3D-граф", optimization: "Оптимизация", dashboard: "Пульт управления"}[state.workspaceMode];
-  if (state.chat) el("model-caption").textContent = {dialog: "Вопросы и ответы по показателям модели", graph: "Связи показателей и расчётов", optimization: "Расчёт и сравнение нового плана", dashboard: "Показатели, динамика и детализация"}[state.workspaceMode];
+  el("jump-latest").hidden = ["dashboard", "graph", "constraints"].includes(state.workspaceMode);
+  el("workspace-breadcrumb-label").textContent = {dialog: "Аналитика", graph: "3D-граф", optimization: "Оптимизация", constraints: "Ограничители", dashboard: "Пульт управления"}[state.workspaceMode];
+  if (state.chat) el("model-caption").textContent = {dialog: "Вопросы и ответы по показателям модели", graph: "Связи показателей и расчётов", optimization: "Расчёт и сравнение нового плана", constraints: "Пределы, нагрузка и связанные показатели", dashboard: "Показатели, динамика и детализация"}[state.workspaceMode];
   if (state.workspaceMode === "dashboard") dashboard?.show(); else dashboard?.hide();
+  constraints?.setMode(state.workspaceMode);
   updateControls();
   if (state.workspaceMode === "graph") modelFlow.openGraph();
 }
@@ -687,6 +696,12 @@ dashboard = window.TabulaDashboard.mount(el("dashboard-workspace"), {
     setWorkspaceMode(kind === "graph" ? "graph" : kind === "optimization" ? "optimization" : "dialog");
     if (kind === "optimization") modelFlow.openOptimizationCheck();
   }
+});
+constraints = window.TabulaConstraints.mount(el("constraints-workspace"), dashboard.constraintPanel, {
+  request: api,
+  onMode: mode => setWorkspaceMode(mode),
+  canOpenGraph: () => !!state.modelFlow?.graph?.ready,
+  async onOpenChild(id) { setWorkspaceMode("dialog"); await selectChat(id); await loadChats(); }
 });
 document.querySelectorAll("[data-workspace-mode]").forEach(button => button.addEventListener("click", () => {
   setWorkspaceMode(button.dataset.workspaceMode);

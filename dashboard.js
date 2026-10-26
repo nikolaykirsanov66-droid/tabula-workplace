@@ -130,8 +130,9 @@ window.TabulaDashboard = (() => {
     searchInput.type = "search"; searchInput.placeholder = "Выручка, затраты, денежный поток…"; searchInput.setAttribute("aria-label", "Найти показатель пульта");
     periodLabel.append(periodSelect); scenarioLabel.append(scenarioSelect); searchLabel.append(searchInput); filters.append(periodLabel, scenarioLabel, searchLabel);
     const alert = node("div", "td-alert"); alert.setAttribute("role", "status");
+    const constraintPanel = node("section", "td-constraint-panel"); constraintPanel.hidden = true;
     const content = node("div", "td-content"), footer = node("p", "td-footer", "Пульт показывает сохранённые значения модели. Обновление пульта не запускает выгрузку из 1С или пересчёт.");
-    root.replaceChildren(header, snapshot, filters, alert, content, footer);
+    root.replaceChildren(header, snapshot, constraintPanel, filters, alert, content, footer);
 
     const chatId = () => typeof state.chat === "string" ? state.chat : state.chat?.id;
     const snapshotIdentity = data => {
@@ -501,6 +502,7 @@ window.TabulaDashboard = (() => {
     });
     render();
     return {
+      constraintPanel,
       setChat(chat) {
         const before = chatId(); state.chat = chat;
         if (before === chatId()) return;

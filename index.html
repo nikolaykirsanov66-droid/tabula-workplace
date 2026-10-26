@@ -8,9 +8,10 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
   <title>Табула · Аналитика и планирование</title>
-  <link rel="stylesheet" href="./style.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./style.css?v=20261026-constraints-1">
   <link rel="stylesheet" href="./charts.css?v=20261025-workspace-clean-3">
   <link rel="stylesheet" href="./dashboard.css?v=20261025-workspace-clean-3">
+  <link rel="stylesheet" href="./constraints.css?v=20261026-constraints-1">
   <link rel="stylesheet" href="./model-flow.css?v=20261025-workspace-clean-3">
   <link rel="stylesheet" href="./model-graph.css?v=20261025-workspace-clean-3">
   <script src="./publicconfig.js?v=61fef1615470" defer></script>
@@ -19,8 +20,9 @@
   <script src="./charts.js?v=20261025-workspace-clean-3" defer></script>
   <script src="./model-graph.js?v=20261025-workspace-clean-3" defer></script>
   <script src="./model-flow.js?v=20261025-workspace-clean-3" defer></script>
-  <script src="./dashboard.js?v=20261025-workspace-clean-3" defer></script>
-  <script src="./app.js?v=20261026-publication-proof-1" defer></script>
+  <script src="./dashboard.js?v=20261026-constraints-1" defer></script>
+  <script src="./constraints.js?v=20261026-constraints-1" defer></script>
+  <script src="./app.js?v=20261026-constraints-1" defer></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -99,6 +101,7 @@
           <button type="button" data-workspace-mode="dialog" class="selected" aria-pressed="true">Аналитика</button>
           <button type="button" id="workspace-graph" data-workspace-mode="graph" aria-pressed="false" disabled>3D-граф</button>
           <button type="button" data-workspace-mode="optimization" aria-pressed="false" disabled>Оптимизация</button>
+          <button type="button" data-workspace-mode="constraints" aria-pressed="false" disabled>Ограничители</button>
           <button type="button" data-workspace-mode="dashboard" aria-pressed="false">Пульт управления</button>
         </div>
       </nav>
@@ -111,6 +114,7 @@
       <section id="model-flow" class="model-flow" aria-label="Модель в Табуле и состояние плана" aria-live="polite" hidden></section>
       <div id="global-notice" class="notice" role="status" hidden></div>
       <section id="graph-workspace" class="model-graph-workspace" aria-label="Граф зависимостей модели" hidden></section>
+      <section id="constraints-workspace" class="constraints-workspace" aria-label="Ограничители модели" hidden></section>
       <section id="dashboard-workspace" class="dashboard-workspace" aria-label="Пульт управления моделью" hidden></section>
       <section id="conversation" class="conversation" aria-live="polite" aria-label="Сообщения диалога">
         <div class="welcome">
