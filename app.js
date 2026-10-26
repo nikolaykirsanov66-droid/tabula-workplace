@@ -482,6 +482,17 @@ function renderConversation() {
   for (const details of container.querySelectorAll("details[data-detail]")) if (expanded.has(details.dataset.detail)) details.open = true;
   if (nearBottom) container.scrollTop = container.scrollHeight;
 }
+function taskPublicationIsApplied(task, chat, flow) {
+  const context = task?.tabula_context, model = flow?.model, publication = flow?.publication, copy = publication?.new_version;
+  const valid = value => typeof value === "string" && value.length > 0;
+  if (task?.kind !== "optimization" || task.result?.verification?.passed !== true ||
+      flow?.status !== "ready" || !valid(chat?.id) || task.chat_id !== chat.id || flow.chat_id !== chat.id ||
+      !valid(task.id) || publication?.status !== "applied" || publication.task_id !== task.id ||
+      !valid(flow.id) || context?.pipeline_id !== flow.id || !valid(task.source_sha256) ||
+      task.source_sha256 !== context.snapshot_sha256) return false;
+  if (["model_id", "version_id", "revision"].some(key => !valid(model?.[key]) || context[key] !== model[key] || !valid(copy?.[key]))) return false;
+  return copy.model_id !== model.model_id;
+}
 function renderTask(task, hasAssistant) {
   const card = node("div", "task-card"); const top = node("div", "task-top");
   card.dataset.status = task.status;
@@ -496,7 +507,12 @@ function renderTask(task, hasAssistant) {
   }
   card.append(top);
   if (task.error) card.append(node("div", "task-error", taskError(task.error)));
-  if (task.status === "needs_review") card.append(node("div", "task-note", "Оптимизированный план рассчитан. Пересчёт полной модели ещё не подтверждён; перед применением нужна проверка."));
+  if (task.status === "needs_review") {
+    const note = taskPublicationIsApplied(task, state.chat, state.modelFlow) ?
+      "Отдельная копия создана в Табуле, пересчитана и сверена. Бизнес-условия плана требуют проверки." :
+      "Оптимизированный план рассчитан. Пересчёт полной модели ещё не подтверждён; перед применением нужна проверка.";
+    card.append(node("div", "task-note", note));
+  }
   if (task.kind === "optimization" && ["completed", "needs_review"].includes(task.status) && task.result?.verification?.passed) {
     const review = node("div", "plan-review-callout");
     const symbol = node("span", "review-callout-icon"); symbol.append(icon("chat"));
