@@ -6,8 +6,8 @@ const state = {token: window.TabulaConnection.getToken(), capabilities: null,
   showArchived: false, chatListRevision: 0, chatListLoading: false,
   modelFlow: null, flowLoading: false, flowError: "", selectionRevision: 0, dashboardFocus: null,
   tabulaModels: [], tabulaModelsLoading: false, tabulaCatalogRevision: 0, tabulaPullRequest: null,
-  workspaceMode: ["dialog", "graph", "optimization", "constraints", "dashboard", "screens"].includes(new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) ? (new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) : "dialog"};
-let dashboard = null, constraints = null, screens = null;
+  workspaceMode: ["dialog", "graph", "optimization", "constraints", "dashboard", "screens", "business-rules"].includes(new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) ? (new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) : "dialog"};
+let dashboard = null, constraints = null, screens = null, businessRules = null;
 const terminal = new Set(["completed", "needs_review", "needs_input", "failed", "blocked", "cancelled", "interrupted"]);
 const statuses = {queued: ["В очереди", "neutral"], running: ["Выполняется", "running"], completed: ["Готово", "success"],
   needs_review: ["Нужна проверка", "warning"], needs_input: ["Нужно уточнение", "warning"], failed: ["Ошибка", "danger"], blocked: ["Расчёт заблокирован", "warning"],
@@ -273,6 +273,7 @@ async function loadChats() {
   }
 }
 async function clearSelectedChat() {
+  if (businessRules && !(await businessRules.setChat(null))) return;
   state.selectionRevision++; state.chat = null; state.dashboardFocus = null; state.renderSignature = null;
   state.modelFlow = null; state.flowLoading = false; state.flowError = ""; state.kind = "analysis";
   sessionStorage.removeItem("tabula_harness_chat_id");
@@ -367,6 +368,7 @@ function confirmRemoveChat(chat) {
 }
 async function selectChat(id) {
   if (screens?.hasUnsavedChanges() && !screens.canLeave()) return;
+  if (businessRules && !(await businessRules.setChat(null))) return;
   const selectionRevision = ++state.selectionRevision;
   state.dashboardFocus = null;
   dashboard?.setChat(null);
@@ -382,6 +384,7 @@ async function selectChat(id) {
     dashboard?.setChat(chat);
     constraints?.setChat(chat);
     screens?.setChat(chat);
+    businessRules?.setChat(chat.id);
     sessionStorage.setItem("tabula_harness_chat_id", state.chat.id);
     const url = new URL(window.location.href);
     url.searchParams.set("chat", state.chat.id);
@@ -664,7 +667,7 @@ function requestId() {
 }
 
 function setWorkspaceMode(mode) {
-  state.workspaceMode = ["dialog", "graph", "optimization", "constraints", "dashboard", "screens"].includes(mode) ? mode : "dialog";
+  state.workspaceMode = ["dialog", "graph", "optimization", "constraints", "dashboard", "screens", "business-rules"].includes(mode) ? mode : "dialog";
   if (state.workspaceMode === "dialog") state.kind = "analysis";
   if (state.workspaceMode === "optimization") state.kind = "optimization";
   sessionStorage.setItem("tabula_harness_workspace_mode", state.workspaceMode);
@@ -675,18 +678,20 @@ function setWorkspaceMode(mode) {
   document.body.classList.toggle("dashboard-mode", state.workspaceMode === "dashboard");
   document.body.classList.toggle("constraints-mode", state.workspaceMode === "constraints");
   document.body.classList.toggle("screens-mode", state.workspaceMode === "screens");
+  document.body.classList.toggle("business-rules-mode", state.workspaceMode === "business-rules");
   document.body.classList.toggle("graph-mode", state.workspaceMode === "graph");
   document.body.classList.toggle("optimization-mode", state.workspaceMode === "optimization");
   document.querySelectorAll("[data-workspace-mode]").forEach(button => {
     const selected = button.dataset.workspaceMode === state.workspaceMode;
     button.classList.toggle("selected", selected); button.setAttribute("aria-pressed", String(selected));
   });
-  el("jump-latest").hidden = ["dashboard", "graph", "constraints", "screens"].includes(state.workspaceMode);
-  el("workspace-breadcrumb-label").textContent = {dialog: "Аналитика", graph: "3D-граф", optimization: "Оптимизация", constraints: "Ограничители", dashboard: "Пульт управления", screens: "Сборка экранов"}[state.workspaceMode];
-  if (state.chat) el("model-caption").textContent = {dialog: "Вопросы и ответы по показателям модели", graph: "Связи показателей и расчётов", optimization: "Расчёт и сравнение нового плана", constraints: "Пределы, нагрузка и связанные показатели", dashboard: "Показатели, динамика и детализация", screens: "Ваши метрики, разрезы и расположение карточек"}[state.workspaceMode];
+  el("jump-latest").hidden = ["dashboard", "graph", "constraints", "screens", "business-rules"].includes(state.workspaceMode);
+  el("workspace-breadcrumb-label").textContent = {dialog: "Аналитика", graph: "3D-граф", optimization: "Оптимизация", constraints: "Ограничители", dashboard: "Пульт управления", screens: "Сборка экранов", "business-rules": "Правила модели"}[state.workspaceMode];
+  if (state.chat) el("model-caption").textContent = {dialog: "Вопросы и ответы по показателям модели", graph: "Связи показателей и расчётов", optimization: "Расчёт и сравнение нового плана", constraints: "Пределы, нагрузка и связанные показатели", dashboard: "Показатели, динамика и детализация", screens: "Ваши метрики, разрезы и расположение карточек", "business-rules": "Смысл показателей и бизнес-условия, которые можно дополнить"}[state.workspaceMode];
   if (state.workspaceMode === "dashboard") dashboard?.show(); else dashboard?.hide();
   constraints?.setMode(state.workspaceMode);
   screens?.setMode(state.workspaceMode);
+  businessRules?.setMode(state.workspaceMode);
   updateControls();
   if (state.workspaceMode === "graph") modelFlow.openGraph();
 }
@@ -698,6 +703,7 @@ const modelFlow = window.TabulaModelFlow.mount(el("model-flow"), {
     state.modelFlow = value.flow; state.flowLoading = value.loading; state.flowError = value.error;
     updateControls(); renderConversation();
     if (state.workspaceMode === "dashboard" && previousStatus && value.flow?.status !== previousStatus) dashboard?.refresh();
+    if (state.workspaceMode === "business-rules" && value.flow?.status === "ready" && previousStatus !== "ready") businessRules?.refresh();
     if (state.workspaceMode === "graph" && value.flow?.graph?.ready && !value.loading) queueMicrotask(() => modelFlow.openGraph());
   },
   onMode(kind, value = {}) {
@@ -731,6 +737,7 @@ constraints = window.TabulaConstraints.mount(el("constraints-workspace"), dashbo
   async onOpenChild(id) { setWorkspaceMode("dialog"); await selectChat(id); await loadChats(); }
 });
 screens = window.TabulaScreens.mount(el("screens-workspace"), {request: api});
+businessRules = window.TabulaBusinessRules.mount(el("business-rules-workspace"), {request: api});
 document.querySelectorAll("[data-workspace-mode]").forEach(button => button.addEventListener("click", () => {
   setWorkspaceMode(button.dataset.workspaceMode);
   if (button.dataset.workspaceMode === "optimization") modelFlow.openOptimizationCheck();

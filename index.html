@@ -8,12 +8,13 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
   <title>Табула · Аналитика и планирование</title>
-  <link rel="stylesheet" href="./style.css?v=20261026-screens-1">
+  <link rel="stylesheet" href="./style.css?v=20261026-rules-1">
   <link rel="stylesheet" href="./charts.css?v=20261025-workspace-clean-3">
   <link rel="stylesheet" href="./dashboard.css?v=20261025-workspace-clean-3">
   <link rel="stylesheet" href="./constraints.css?v=20261026-constraints-2">
   <link rel="stylesheet" href="./metric-insights.css?v=20261026-metrics-3">
-  <link rel="stylesheet" href="./screens.css?v=20261026-screens-1">
+  <link rel="stylesheet" href="./screens.css?v=20261026-pivot-3">
+  <link rel="stylesheet" href="./business-rules.css?v=20261026-rules-1">
   <link rel="stylesheet" href="./model-flow.css?v=20261025-workspace-clean-3">
   <link rel="stylesheet" href="./model-graph.css?v=20261025-workspace-clean-3">
   <script src="./publicconfig.js?v=61fef1615470" defer></script>
@@ -25,8 +26,9 @@
   <script src="./dashboard.js?v=20261026-screens-1" defer></script>
   <script src="./constraints.js?v=20261026-constraints-2" defer></script>
   <script src="./metric-insights.js?v=20261026-metrics-5" defer></script>
-  <script src="./screens.js?v=20261026-screens-1" defer></script>
-  <script src="./app.js?v=20261026-screens-1" defer></script>
+  <script src="./screens.js?v=20261026-pivot-3" defer></script>
+  <script src="./business-rules.js?v=20261026-rules-1" defer></script>
+  <script src="./app.js?v=20261026-rules-1" defer></script>
 </head>
 <body>
   <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -108,6 +110,7 @@
           <button type="button" data-workspace-mode="constraints" aria-pressed="false" disabled>Ограничители</button>
           <button type="button" data-workspace-mode="dashboard" aria-pressed="false">Пульт управления</button>
           <button type="button" data-workspace-mode="screens" aria-pressed="false">Сборка экранов</button>
+          <button type="button" data-workspace-mode="business-rules" aria-pressed="false">Правила модели</button>
         </div>
       </nav>
       <section id="tabula-model-picker" class="tabula-model-picker" aria-labelledby="tabula-picker-title" hidden>
@@ -122,6 +125,7 @@
       <section id="constraints-workspace" class="constraints-workspace" aria-label="Ограничители модели" hidden></section>
       <section id="dashboard-workspace" class="dashboard-workspace" aria-label="Пульт управления моделью" hidden></section>
       <section id="screens-workspace" class="screens-workspace" aria-label="Сборка экранов" hidden></section>
+      <section id="business-rules-workspace" aria-label="Правила модели" hidden></section>
       <section id="conversation" class="conversation" aria-live="polite" aria-label="Сообщения диалога">
         <div class="welcome">
           <span class="welcome-icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-layers"/></svg></span>
