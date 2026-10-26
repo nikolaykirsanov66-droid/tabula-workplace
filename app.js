@@ -6,8 +6,8 @@ const state = {token: window.TabulaConnection.getToken(), capabilities: null,
   showArchived: false, chatListRevision: 0, chatListLoading: false,
   modelFlow: null, flowLoading: false, flowError: "", selectionRevision: 0, dashboardFocus: null,
   tabulaModels: [], tabulaModelsLoading: false, tabulaCatalogRevision: 0, tabulaPullRequest: null,
-  workspaceMode: ["dialog", "graph", "optimization", "constraints", "dashboard"].includes(new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) ? (new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) : "dialog"};
-let dashboard = null, constraints = null;
+  workspaceMode: ["dialog", "graph", "optimization", "constraints", "dashboard", "screens"].includes(new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) ? (new URL(window.location.href).searchParams.get("view") || sessionStorage.getItem("tabula_harness_workspace_mode")) : "dialog"};
+let dashboard = null, constraints = null, screens = null;
 const terminal = new Set(["completed", "needs_review", "needs_input", "failed", "blocked", "cancelled", "interrupted"]);
 const statuses = {queued: ["В очереди", "neutral"], running: ["Выполняется", "running"], completed: ["Готово", "success"],
   needs_review: ["Нужна проверка", "warning"], needs_input: ["Нужно уточнение", "warning"], failed: ["Ошибка", "danger"], blocked: ["Расчёт заблокирован", "warning"],
@@ -280,6 +280,7 @@ async function clearSelectedChat() {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   dashboard?.setChat(null);
   constraints?.setChat(null);
+  screens?.setChat(null);
   el("chat-title").textContent = "Аналитика и планирование";
   el("model-caption").textContent = "Выберите модель, чтобы начать работу.";
   el("message-input").value = "";
@@ -365,10 +366,12 @@ function confirmRemoveChat(chat) {
   document.body.append(dialog); dialog.showModal(); cancel.focus();
 }
 async function selectChat(id) {
+  if (screens?.hasUnsavedChanges() && !screens.canLeave()) return;
   const selectionRevision = ++state.selectionRevision;
   state.dashboardFocus = null;
   dashboard?.setChat(null);
   constraints?.setChat(null);
+  screens?.setChat(null);
   try {
     const chat = await api(`/v1/chats/${id}`);
     if (selectionRevision !== state.selectionRevision) return;
@@ -378,6 +381,7 @@ async function selectChat(id) {
     state.chat = chat;
     dashboard?.setChat(chat);
     constraints?.setChat(chat);
+    screens?.setChat(chat);
     sessionStorage.setItem("tabula_harness_chat_id", state.chat.id);
     const url = new URL(window.location.href);
     url.searchParams.set("chat", state.chat.id);
@@ -660,7 +664,7 @@ function requestId() {
 }
 
 function setWorkspaceMode(mode) {
-  state.workspaceMode = ["dialog", "graph", "optimization", "constraints", "dashboard"].includes(mode) ? mode : "dialog";
+  state.workspaceMode = ["dialog", "graph", "optimization", "constraints", "dashboard", "screens"].includes(mode) ? mode : "dialog";
   if (state.workspaceMode === "dialog") state.kind = "analysis";
   if (state.workspaceMode === "optimization") state.kind = "optimization";
   sessionStorage.setItem("tabula_harness_workspace_mode", state.workspaceMode);
@@ -670,17 +674,19 @@ function setWorkspaceMode(mode) {
   modelFlow.closeGraph();
   document.body.classList.toggle("dashboard-mode", state.workspaceMode === "dashboard");
   document.body.classList.toggle("constraints-mode", state.workspaceMode === "constraints");
+  document.body.classList.toggle("screens-mode", state.workspaceMode === "screens");
   document.body.classList.toggle("graph-mode", state.workspaceMode === "graph");
   document.body.classList.toggle("optimization-mode", state.workspaceMode === "optimization");
   document.querySelectorAll("[data-workspace-mode]").forEach(button => {
     const selected = button.dataset.workspaceMode === state.workspaceMode;
     button.classList.toggle("selected", selected); button.setAttribute("aria-pressed", String(selected));
   });
-  el("jump-latest").hidden = ["dashboard", "graph", "constraints"].includes(state.workspaceMode);
-  el("workspace-breadcrumb-label").textContent = {dialog: "Аналитика", graph: "3D-граф", optimization: "Оптимизация", constraints: "Ограничители", dashboard: "Пульт управления"}[state.workspaceMode];
-  if (state.chat) el("model-caption").textContent = {dialog: "Вопросы и ответы по показателям модели", graph: "Связи показателей и расчётов", optimization: "Расчёт и сравнение нового плана", constraints: "Пределы, нагрузка и связанные показатели", dashboard: "Показатели, динамика и детализация"}[state.workspaceMode];
+  el("jump-latest").hidden = ["dashboard", "graph", "constraints", "screens"].includes(state.workspaceMode);
+  el("workspace-breadcrumb-label").textContent = {dialog: "Аналитика", graph: "3D-граф", optimization: "Оптимизация", constraints: "Ограничители", dashboard: "Пульт управления", screens: "Сборка экранов"}[state.workspaceMode];
+  if (state.chat) el("model-caption").textContent = {dialog: "Вопросы и ответы по показателям модели", graph: "Связи показателей и расчётов", optimization: "Расчёт и сравнение нового плана", constraints: "Пределы, нагрузка и связанные показатели", dashboard: "Показатели, динамика и детализация", screens: "Ваши метрики, разрезы и расположение карточек"}[state.workspaceMode];
   if (state.workspaceMode === "dashboard") dashboard?.show(); else dashboard?.hide();
   constraints?.setMode(state.workspaceMode);
+  screens?.setMode(state.workspaceMode);
   updateControls();
   if (state.workspaceMode === "graph") modelFlow.openGraph();
 }
@@ -724,6 +730,7 @@ constraints = window.TabulaConstraints.mount(el("constraints-workspace"), dashbo
   canOpenGraph: () => !!state.modelFlow?.graph?.ready,
   async onOpenChild(id) { setWorkspaceMode("dialog"); await selectChat(id); await loadChats(); }
 });
+screens = window.TabulaScreens.mount(el("screens-workspace"), {request: api});
 document.querySelectorAll("[data-workspace-mode]").forEach(button => button.addEventListener("click", () => {
   setWorkspaceMode(button.dataset.workspaceMode);
   if (button.dataset.workspaceMode === "optimization") modelFlow.openOptimizationCheck();

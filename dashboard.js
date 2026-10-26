@@ -523,5 +523,5 @@ window.TabulaDashboard = (() => {
       refresh,
     };
   }
-  return {mount};
+  return {mount, renderChart: chart};
 })();
