@@ -11,6 +11,30 @@ window.TabulaConstraints = (() => {
     return window.TabulaPresentation?.text?.(value) ?? String(value);
   };
   const number = value => isNumber(value) ? formatter.format(value) : "—";
+  // Business labels for the existing workbook controls. These are display
+  // aliases only: source titles, parameter IDs and numeric values stay intact.
+  const parameterLabels = new Map([
+    ["минимум объёма проекта к базе", {
+      title: "Минимальный объём работ по проекту",
+      description: "Ниже какого объёма нельзя опускаться по каждому проекту. Например, 90% — можно сократить работы не более чем на 10%."
+    }],
+    ["максимум объёма проекта к базе", {
+      title: "Максимальный объём работ по проекту",
+      description: "До какого объёма можно увеличить работы по каждому проекту. Например, 110% — рост не более чем на 10%."
+    }],
+    ["общая мощность к базовому объёму", {
+      title: "Общий предел объёма работ",
+      description: "Сколько работ можно запланировать по всем проектам вместе. Например, 105% — не более чем на 5% выше исходного плана."
+    }],
+    ["совокупный объём не ниже исходного", {
+      title: "Минимальный объём работ компании",
+      description: "Какой общий объём необходимо сохранить. Например, 100% — не меньше исходного плана по всем проектам вместе."
+    }]
+  ]);
+  function parameterCopy(parameter) {
+    const title = text(parameter.title) || "Параметр";
+    return parameterLabels.get(title.trim().toLocaleLowerCase("ru").replace(/\s+/g, " ")) || {title, description: ""};
+  }
   function percent(value) {
     if (value > 0 && value < .005) return "<0,01";
     if (value > 100 && value < 100.005) return ">100";
@@ -138,7 +162,7 @@ window.TabulaConstraints = (() => {
       else if (isNumber(item.reserve) && item.reserve > 0 && item.status !== "unknown") card.append(make("p", "tc-reserve", `Запас: ${measure(item.reserve, item.unit)}`));
       if (!compact) {
         const parameterIds = new Set(Array.isArray(item.parameter_ids) ? item.parameter_ids : []);
-        const parameterNames = state.data.parameters.filter(parameter => parameterIds.has(parameter.id)).map(parameter => text(parameter.title)).filter(Boolean);
+        const parameterNames = state.data.parameters.filter(parameter => parameterIds.has(parameter.id)).map(parameter => parameterCopy(parameter).title).filter(Boolean);
         if (parameterNames.length > 3) {
           const details = make("details", "tc-affected"), summary = make("summary", "", `Связанные параметры и данные: ${parameterNames.length}`), list = make("ul");
           for (const name of parameterNames) list.append(make("li", "", name)); details.append(summary, list); card.append(details);
@@ -183,7 +207,6 @@ window.TabulaConstraints = (() => {
       else {
         panel.append(makeSummary(state.data, true));
         if (state.data.summary?.message) panel.append(make("p", "tc-dashboard-message", state.data.summary.message));
-        if (state.data.items.some(item => item.demo_assumption)) panel.append(make("p", "tc-notice", "В модели есть демонстрационные допущения. Фактические пределы нужно подтвердить."));
         if (dirty()) panel.append(make("p", "tc-notice", "Есть несохранённые изменения. Показаны последние сохранённые значения."));
         if (state.data.draft?.changed) panel.append(make("p", "tc-notice", "Предварительная оценка черновика по сохранённому плану, без пересчёта показателей."));
         const items = [...state.data.items].sort(compareItems).slice(0, 4);
@@ -194,19 +217,24 @@ window.TabulaConstraints = (() => {
     }
     function renderParameters(data) {
       const section = make("section", "tc-section tc-parameters"), header = make("div", "tc-section-head"), heading = make("div");
-      heading.append(make("h3", "", "Параметры ограничений"), make("p", "", "Распознанные параметры поступают из модели. Один параметр может влиять на несколько ограничений."));
+      const hasBusinessControls = data.parameters.some(parameter => parameter.editable && parameterCopy(parameter).description);
+      heading.append(make("h3", "", "Параметры ограничителей"), make("p", "", hasBusinessControls ?
+        "100% — объём исходного плана. Условия действуют в каждом месяце: по отдельным проектам и по компании в целом." :
+        "Задайте допустимые пределы плана. Одно значение может действовать сразу для нескольких ограничителей."));
       header.append(heading); section.append(header);
       if (!data.parameters.length) { section.append(make("p", "tc-muted", "Параметры ограничений не найдены в модели.")); return section; }
       const form = make("form", "tc-form"); form.autocomplete = "off";
       const list = make("div", "tc-parameter-list"), readOnlyList = make("div", "tc-parameter-list"), readOnlyCount = data.parameters.filter(parameter => !parameter.editable).length;
       for (const parameter of data.parameters) {
-        const row = make("div", "tc-parameter"), info = make("div", "tc-parameter-info"), label = make("label", "", parameter.title || "Параметр");
+        const copy = parameterCopy(parameter);
+        const row = make("div", "tc-parameter"), info = make("div", "tc-parameter-info"), label = make("label", "", copy.title);
         const input = make("input"); input.type = "number"; input.step = "any"; input.inputMode = "decimal";
         const displayed = displayParameter(parameter, parameter.value);
         input.value = state.edits.has(parameter.id) ? state.edits.get(parameter.id) : isNumber(displayed) ? String(displayed) : "";
         input.disabled = !parameter.editable || state.loading || state.busy;
-        input.setAttribute("aria-label", text(parameter.title || "Параметр")); label.append(input);
+        input.setAttribute("aria-label", copy.title); label.append(input);
         info.append(label);
+        if (copy.description) info.append(make("p", "tc-parameter-description", copy.description));
         const note = [parameter.unit, parameter.source_label, parameter.demo_assumption ? "Демонстрационное допущение" : ""].filter(Boolean).map(text).join(" · ");
         if (note) info.append(make("p", "tc-muted", note));
         const names = affectedNames(parameter);
@@ -281,7 +309,6 @@ window.TabulaConstraints = (() => {
       const summary = make("section", "tc-section tc-overview"), headline = make("div", "tc-section-head");
       headline.append(make("h3", "", "Состояние плана")); summary.append(headline, makeSummary(data));
       if (data.summary?.message) summary.append(make("p", "tc-summary-message", data.summary.message));
-      if (data.items.some(item => item.demo_assumption)) summary.append(make("p", "tc-notice", "В модели есть демонстрационные допущения. Фактические пределы нужно подтвердить."));
       if (data.draft?.changed) summary.append(make("p", "tc-notice", "Предварительная оценка черновика по сохранённому плану, без пересчёта показателей."));
       root.append(summary, renderParameters(data));
       const limits = make("section", "tc-section"), limitsHeading = make("div", "tc-section-head");

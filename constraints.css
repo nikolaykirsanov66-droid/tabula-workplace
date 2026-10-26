@@ -33,6 +33,7 @@
 .tc-dot.tc-ok { background: #2d8a4a; }.tc-dot.tc-near { background: #bf8c00; }.tc-dot.tc-violated { background: #cf4b3d; }
 .tc-summary-message, .tc-muted, .tc-form-hint { color: #696970; font-size: 12px; line-height: 1.55; }
 .tc-summary-message { margin: 13px 0 0; }
+.tc-parameter-description { margin: 8px 0; color: #55555d; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
 .tc-impact-note, .tc-warnings { margin: 0 0 12px; color: #66666e; font-size: 12px; line-height: 1.55; }.tc-warnings summary { cursor: pointer; }.tc-warnings ul { margin: 7px 0 0; padding-left: 18px; }
 .tc-alert, .tc-notice { padding: 10px 12px; border: 1px solid #e7d37a; border-radius: 4px; background: #fffbed; color: #5e5022; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
 .tc-alert { margin: 0 0 14px; border-color: #edb9b2; background: #fff4f2; color: #8b352a; }
