@@ -84,7 +84,14 @@ window.TabulaMetricInsights = (() => {
     } else if (comparison.pct_unavailable_reason) {
       root.append(node("p", "metric-insight-note", comparison.pct_unavailable_reason));
     }
-    const observations = Array.isArray(item.observations) ? item.observations.filter(value => value && (value.title || value.detail)).slice(0, 6) : [];
+    const observations = Array.isArray(item.observations) ? item.observations.filter(value => {
+      if (!value || (!value.title && !value.detail)) return false;
+      const title = present(value.title);
+      if (finite(current.value) && ["Последнее наблюдение", "Последнее доступное значение", "Выбранное значение"].includes(title)) return false;
+      if (title === "Изменение значения" && comparison.available === true && finite(comparison.delta_absolute) &&
+          !/наблюдения разделены несколькими календарными периодами/i.test(present(value.detail))) return false;
+      return true;
+    }).slice(0, 6) : [];
     if (observations.length) {
       const list = node("ul", "metric-insight-observations");
       for (const value of observations) {
