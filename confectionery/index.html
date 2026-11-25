@@ -16,6 +16,7 @@ h1{font-size:clamp(26px,5vw,32px);line-height:1.16;letter-spacing:-.025em;margin
 p{font-size:16px;line-height:1.6;color:#606670;margin:0 0 26px}
 a{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;border-radius:8px;background:#ffdd00;color:#202328;font-size:16px;font-weight:650;text-decoration:none}
 a:hover{background:#f1cf00}a:focus-visible{outline:3px solid #2761c4;outline-offset:4px}
+a[aria-disabled=true]{pointer-events:none;opacity:.6}.retry{display:inline-block;margin-left:12px;min-height:48px;padding:10px 6px;background:none;border:0;color:#4c5665;font:inherit;font-size:15px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}[hidden]{display:none!important}
 small{display:block;margin-top:24px;color:#727883;font-size:14px;line-height:1.5}
 @media(prefers-reduced-motion:no-preference){.mark{animation:appear .4s ease-out}@keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}}
 </style>
@@ -24,17 +25,42 @@ small{display:block;margin-top:24px;color:#727883;font-size:14px;line-height:1.5
 <main>
 <div class="mark" aria-hidden="true">H</div>
 <h1>Кондитерская сеть</h1>
-<p role="status">Открываем рабочую демонстрацию Harness.</p>
-<a id="open-demo" href="https://stocks-assessing-paint-sticky.trycloudflare.com/" rel="noreferrer">Открыть демонстрацию</a>
+<p id="connection-status" role="status" aria-live="polite">Подключаем демонстрацию…</p>
+<a id="open-demo" href="https://stocks-assessing-paint-sticky.trycloudflare.com/" rel="noreferrer" aria-disabled="true">Открыть демонстрацию</a>
+<button type="button" id="retry-demo" class="retry" hidden>Повторить</button>
 <small>Показатели, план и факт, бюджеты, 3D-граф и расчёт сценариев. Вход без регистрации.</small>
-<noscript><p>Нажмите «Открыть демонстрацию», чтобы перейти в приложение.</p></noscript>
+<noscript><p>Для рабочей демонстрации нужно включить JavaScript.</p></noscript>
 </main>
 <script>
 "use strict";
-const target="https://stocks-assessing-paint-sticky.trycloudflare.com/";
-if(new URLSearchParams(location.search).get("preview")!=="1"){
-  window.setTimeout(()=>location.replace(target),250);
+const initialTarget="https://stocks-assessing-paint-sticky.trycloudflare.com/";
+const link=document.getElementById("open-demo"),status=document.getElementById("connection-status"),retry=document.getElementById("retry-demo");
+const routingKeys=["chat","view","screen","workspace","version","period","date_from","date_to"];
+let loading=false,redirectTimer;
+function targetUrl(value){
+  if(typeof value!=="string"||!/^https:\/\/[a-z0-9-]+\.trycloudflare\.com\/?$/.test(value))throw Error("Некорректный адрес демонстрации");
+  const target=new URL(value),params=new URLSearchParams(location.search);
+  for(const key of routingKeys)if(params.has(key))target.searchParams.set(key,params.get(key));
+  if(!target.searchParams.has("view"))target.searchParams.set("view","dashboard");
+  target.hash=location.hash;return target.href;
 }
+link.href=targetUrl(initialTarget);
+async function connect(){
+  if(loading)return;loading=true;clearTimeout(redirectTimer);link.setAttribute("aria-disabled","true");retry.hidden=true;status.textContent="Подключаем демонстрацию…";
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);
+  try{
+    const resolver=new URL("endpoint.json",location.href);resolver.search="v="+Date.now();resolver.hash="";
+    const response=await fetch(resolver,{cache:"no-store",credentials:"omit",signal:controller.signal,headers:{Accept:"application/json"}});
+    if(!response.ok)throw Error("Адрес обновляется");const data=await response.json();
+    if(data.schema!==1||data.service!=="confectionery-demo")throw Error("Адрес не подтверждён");
+    link.href=targetUrl(data.public_url);link.setAttribute("aria-disabled","false");status.textContent="Демонстрация готова. Открываем…";
+    if(new URLSearchParams(location.search).get("preview")!=="1")redirectTimer=setTimeout(()=>location.replace(link.href),250);
+  }catch{
+    status.textContent="Пока не удалось подключиться. Подождите немного и повторите.";retry.hidden=false;
+  }finally{clearTimeout(timeout);loading=false;}
+}
+link.addEventListener("click",event=>{if(link.getAttribute("aria-disabled")==="true"){event.preventDefault();connect();}});
+retry.addEventListener("click",connect);connect();
 </script>
 </body>
 </html>
